@@ -387,6 +387,7 @@ and [synology-csi](https://github.com/SynologyOpenSource/synology-csi).
 
 If this repo is too hot to handle or too cold to hold check out these following projects.
 
+- [onedr0p/cluster-templateb](https://github.com/onedr0p/cluster-template) - _A template for deploying a Talos Kubernetes cluster including Flux for GitOps._
 - [khuedoan/homelab](https://github.com/khuedoan/homelab) - _Modern self-hosting framework, fully automated from empty disk to operating services with a single command._
 - [danmanners/aws-argo-cluster-template](https://github.com/danmanners/aws-argo-cluster-template) - _A community opinionated template for deploying Kubernetes clusters on-prem and in AWS using Pulumi, SOPS, Sealed Secrets, GitHub Actions, Renovate, Cilium and more!_
 - [ricsanfre/pi-cluster](https://github.com/ricsanfre/pi-cluster) - _Pi Kubernetes Cluster. Homelab kubernetes cluster automated with Ansible and ArgoCD_
