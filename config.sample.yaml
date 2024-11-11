@@ -210,18 +210,6 @@ bootstrap_feature_gates:
   #   IMPORTANT: Cilium does not currently support IPv6 L2 announcements.
   dual_stack_ipv4_first: false
 
-# (Required) Tailscale details - Tailscale is used for VPN and DNS
-bootstrap_tailscale:
-    # (Required) Tailscale Auth Key
-  #   1. Head over to tailscale admin console and create a API Key by going to
-  #      https://login.tailscale.com/admin/settings/keys
-  #   2. Under the `Auth keys` section click the `Generate auth key…` button.
-  #   3. Describe your auth key something like `home-kubernetes`
-  #   4. Toggle the `Reusable` switch to on.
-  #   5. Click the blue `Generate key` button.
-  #   6. Copy the token and paste it below.
-  auth_key: ""
-
 # (Required) Argo details - Argocd fro Gitops
 # `htpasswd -nbBC 10 "" $ARGO_PWD | tr -d ':\n' | sed 's/$2y/$2a/'`
 bootstrap_argocd_admin_password: ""
