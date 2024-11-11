@@ -8,19 +8,19 @@ At a high level this project makes use of [makejinja](https://github.com/mirkole
 
 The features included will depend on the type of configuration you want to use. There are currently **2 different types** of **configurations** available with this template.
 
-1. **"Flux cluster"** - a Kubernetes cluster deployed on-top of [Talos Linux](https://github.com/siderolabs/talos) with an opinionated implementation of [Flux](https://github.com/fluxcd/flux2) using [GitHub](https://github.com/) as the Git provider and [sops](https://github.com/getsops/sops) to manage secrets.
+1. **"Argo cluster"** - a Kubernetes cluster deployed on-top of [Talos Linux](https://github.com/siderolabs/talos) with an opinionated implementation of [Argo](https://github.com/argoproj/argo-cd) using [GitHub](https://github.com/) as the Git provider and [sops](https://github.com/getsops/sops) to manage secrets.
 
     - **Required:** Some knowledge of [Containers](https://opencontainers.org/), [YAML](https://yaml.org/), and [Git](https://git-scm.com/).
-    - **Components:** [flux](https://github.com/fluxcd/flux2), [cilium](https://github.com/cilium/cilium), [cert-manager](https://github.com/cert-manager/cert-manager), [spegel](https://github.com/spegel-org/spegel), [reloader](https://github.com/stakater/Reloader), and [openebs](https://github.com/openebs/openebs).
+    - **Components:** [argo](https://github.com/argoproj/argo-cd), [cilium](https://github.com/cilium/cilium), [cert-manager](https://github.com/cert-manager/cert-manager), [spegel](https://github.com/spegel-org/spegel), [reloader](https://github.com/stakater/Reloader), and [openebs](https://github.com/openebs/openebs).
 
-2. **"Flux cluster with Cloudflare"** - An addition to "**Flux cluster**" that provides DNS and SSL with [Cloudflare](https://www.cloudflare.com/). [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) is also included to provide external access to certain applications deployed in your cluster.
+2. **"Argo cluster with Cloudflare"** - An addition to "**Argo cluster**" that provides DNS and SSL with [Cloudflare](https://www.cloudflare.com/). [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) is also included to provide external access to certain applications deployed in your cluster.
 
     - **Required:** A Cloudflare account with a domain managed in your Cloudflare account.
     - **Components:** [ingress-nginx](https://github.com/kubernetes/ingress-nginx/), [external-dns](https://github.com/kubernetes-sigs/external-dns) and [cloudflared](https://github.com/cloudflare/cloudflared).
 
 **Other features include:**
 
-- A [Renovate](https://www.mend.io/renovate)-ready repository with pull request diffs provided by [flux-local](https://github.com/allenporter/flux-local)
+- A [Renovate](https://www.mend.io/renovate)-ready repository with pull request for automated dependency updates
 - Integrated [GitHub Actions](https://github.com/features/actions) with helpful workflows.
 
 ## 💻 Machine Preparation
@@ -46,7 +46,7 @@ The features included will depend on the type of configuration you want to use. 
 
 ## 🚀 Getting Started
 
-Once you have installed Talos on your nodes, there are six stages to getting a Flux-managed cluster up and running.
+Once you have installed Talos on your nodes, there are six stages to getting a Argo-managed cluster up and running.
 
 > [!NOTE]
 > For all stages below the commands **MUST** be ran on your personal workstation within your repository directory
@@ -191,11 +191,12 @@ You have two different options for setting up your local workstation.
 
     ```sh
     kubectl -n argo-system get pods -o wide
-    # NAME                                       READY   STATUS    RESTARTS   AGE
-    # helm-controller-5bbd94c75-89sb4            1/1     Running   0          1h
-    # kustomize-controller-7b67b6b77d-nqc67      1/1     Running   0          1h
-    # notification-controller-7c46575844-k4bvr   1/1     Running   0          1h
-    # source-controller-7d6875bcb4-zqw9f         1/1     Running   0          1h
+    # NAME                                                     READY   STATUS    RESTARTS   AGE
+    # argo-argocd-application-controller-0                      1/1     Running   0          1h
+    # argo-argocd-applicationset-controller-744474598c-lnk6t    1/1     Running   0          1h
+    # argo-argocd-dex-server-6bc6fb6896-g84rm                   1/1     Running   0          1h
+    # argo-argocd-notifications-controller-78d7b99846-7hssj     1/1     Running   0          1h
+    # argo-argocd-redis-64c8457865-zhbk2                        1/1     Running   0          1h
     ```
 
 ### 🎤 Verification Steps
@@ -220,7 +221,7 @@ _Mic check, 1, 2_ - In a few moments applications should be lighting up like Chr
 
 #### 🌐 Public DNS
 
-The `external-dns` application created in the `networking` namespace will handle creating public DNS records. By default, `echo-server` and the `flux-webhook` are the only subdomains reachable from the public internet. In order to make additional applications public you must set set the correct ingress class name and ingress annotations like in the HelmRelease for `echo-server`.
+The `external-dns` application created in the `networking` namespace will handle creating public DNS records. By default, `echo-server` and the `argo` are the only subdomains reachable from the public internet. In order to make additional applications public you must set set the correct ingress class name and ingress annotations like in the HelmRelease for `echo-server`.
 
 #### 🏠 Home DNS
 
@@ -248,26 +249,17 @@ By default this template will deploy a wildcard certificate using the Let's Encr
 
 #### 🪝 Github Webhook
 
-By default Flux will periodically check your git repository for changes. In order to have Flux reconcile on `git push` you must configure Github to send `push` events to Flux.
+By default Argo will periodically check your git repository for changes. In order to have Argo sync on `git push` you must configure Github to send `push` events to Argo.
 
 > [!NOTE]
 > This will only work after you have switched over certificates to the Let's Encrypt Production servers.
 
-1. Obtain the webhook path
-
-    📍 _Hook id and path should look like `/hook/12ebd1e363c641dc3c2e430ecf3cee2b3c7a5ac9e1234506f6f5f3ce1230e123`_
-
-    ```sh
-    kubectl -n flux-system get receiver github-receiver -o jsonpath='{.status.webhookPath}'
-    ```
-
-2. Piece together the full URL with the webhook path appended
-
+1. Piece together the full URL for webhook
     ```text
-    https://flux-webhook.${bootstrap_cloudflare.domain}/hook/12ebd1e363c641dc3c2e430ecf3cee2b3c7a5ac9e1234506f6f5f3ce1230e123
+    https://argo-webhook.${bootstrap_cloudflare.domain}/api/webhook
     ```
 
-3. Navigate to the settings of your repository on Github, under "Settings/Webhooks" press the "Add webhook" button. Fill in the webhook URL and your `bootstrap_github_webhook_token` secret in `config.yaml`, Content type: `application/json`, Events: Choose Just the push event, and save.
+2. Navigate to the settings of your repository on Github, under "Settings/Webhooks" press the "Add webhook" button. Fill in the webhook URL and your `bootstrap_github_webhook_token` secret in `config.yaml`, Content type: `application/json`, Events: Choose Just the push event, and save.
 
 ## 💥 Reset
 
@@ -319,27 +311,19 @@ The base Renovate configuration in your repository can be viewed at [.github/ren
 
 Below is a general guide on trying to debug an issue with an resource or application. For example, if a workload/resource is not showing up or a pod has started but in a `CrashLoopBackOff` or `Pending` state.
 
-1. Start by checking all Flux Kustomizations & Git Repository & OCI Repository and verify they are healthy.
+1. Start by checking all Argo Applications and verify they are healthy.
 
     ```sh
-    flux get sources oci -A
-    flux get sources git -A
-    flux get ks -A
+      kubectl get applications -n argo-system
     ```
 
-2. Then check all the Flux Helm Releases and verify they are healthy.
-
-    ```sh
-    flux get hr -A
-    ```
-
-3. Then check the if the pod is present.
+2. Then check the if the pod is present.
 
     ```sh
     kubectl -n <namespace> get pods -o wide
     ```
 
-4. Then check the logs of the pod if its there.
+3. Then check the logs of the pod if its there.
 
     ```sh
     kubectl -n <namespace> logs <pod-name> -f
@@ -347,13 +331,13 @@ Below is a general guide on trying to debug an issue with an resource or applica
     stern -n <namespace> <fuzzy-name>
     ```
 
-5. If a resource exists try to describe it to see what problems it might have.
+6. If a resource exists try to describe it to see what problems it might have.
 
     ```sh
     kubectl -n <namespace> describe <resource> <name>
     ```
 
-6. Check the namespace events
+7. Check the namespace events
 
     ```sh
     kubectl -n <namespace> get events --sort-by='.metadata.creationTimestamp'
@@ -372,7 +356,7 @@ The cluster is your oyster (or something like that). Below are some optional con
 
 ### Ship it
 
-To browse or get ideas on applications people are running, community member [@whazor](https://github.com/whazor) created [Kubesearch](https://kubesearch.dev) as a creative way to search Flux HelmReleases across Github and Gitlab.
+To browse or get ideas on applications people are running, community member [@whazor](https://github.com/whazor) created [Kubesearch](https://kubesearch.dev) as a creative way to search Argo Releases across Github and Gitlab.
 
 ### DNS
 
@@ -397,7 +381,7 @@ If this repo is too hot to handle or too cold to hold check out these following 
 
 <div align="center">
 
-[![Star History Chart](https://api.star-history.com/svg?repos=onedr0p/cluster-template&type=Date)](https://star-history.com/#onedr0p/cluster-template&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=ajaykumar4/cluster-template&type=Date)](https://star-history.com/#ajaykumar4/cluster-template&Date)
 
 </div>
 
