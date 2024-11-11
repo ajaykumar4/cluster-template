@@ -175,7 +175,7 @@ You have two different options for setting up your local workstation.
     # k8s-1          Ready    worker                      1h      v1.30.1
     ```
 
-3. Continue on to 🔹 [**Stage 6**](#-stage-6-install-flux-in-your-cluster)
+3. Continue on to 🔹 [**Stage 6**](#-stage-6-install-argo-in-your-cluster)
 
 ### 🔹 Stage 6: Install Argo in your cluster
 
@@ -205,7 +205,7 @@ _Mic check, 1, 2_ - In a few moments applications should be lighting up like Chr
 
 1. Output all the common resources in your cluster.
 
-    📍 _Feel free to use the provided [kubernetes tasks](.taskfiles/Kubernetes/Taskfile.yaml) for validation of cluster resources or continue to get familiar with the `kubectl` and `flux` CLI tools._
+    📍 _Feel free to use the provided [kubernetes tasks](.taskfiles/Kubernetes/Taskfile.yaml) for validation of cluster resources or continue to get familiar with the `kubectl` and `argocd` CLI tools._
 
     ```sh
     task kubernetes:resources
@@ -301,7 +301,7 @@ task talos:upgrade-k8s
 
 ## 🤖 Renovate
 
-[Renovate](https://www.mend.io/renovate) is a tool that automates dependency management. It is designed to scan your repository around the clock and open PRs for out-of-date dependencies it finds. Common dependencies it can discover are Helm charts, container images, GitHub Actions, Ansible roles... even Flux itself! Merging a PR will cause Flux to apply the update to your cluster.
+[Renovate](https://www.mend.io/renovate) is a tool that automates dependency management. It is designed to scan your repository around the clock and open PRs for out-of-date dependencies it finds. Common dependencies it can discover are Helm charts, container images, GitHub Actions, Ansible roles... even Argo itself! Merging a PR will cause Argo to apply the update to your cluster.
 
 To enable Renovate, click the 'Configure' button over at their [Github app page](https://github.com/apps/renovate) and select your repository. Renovate creates a "Dependency Dashboard" as an issue in your repository, giving an overview of the status of all updates. The dashboard has interactive checkboxes that let you do things like advance scheduling or reattempt update PRs you closed without merging.
 
