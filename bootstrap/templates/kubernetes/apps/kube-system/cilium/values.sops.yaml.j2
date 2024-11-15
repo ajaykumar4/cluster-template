@@ -63,6 +63,8 @@ securityContext:
       - NET_ADMIN
       - SYS_ADMIN
       - SYS_RESOURCE
+socketLB:
+  hostNamespaceOnly: true
 
 #% if bootstrap_cloudflare.enabled %#
 hubble:
