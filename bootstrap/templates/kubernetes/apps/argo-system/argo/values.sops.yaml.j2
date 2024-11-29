@@ -25,6 +25,7 @@ configs:
     argocdServerAdminPasswordMtime: #{ current_datetime() }#
     githubSecret: #{ bootstrap_github_webhook_token }#
 controller:
+  replicas: 2
   metrics:
     enabled: true
     applicationLabels:
@@ -34,6 +35,7 @@ controller:
       additionalLabels:
         release: kube-prometheus-stack
 dex:
+  replicas: 2
   metrics:
     enabled: true
     serviceMonitor: *service-monitor
@@ -42,6 +44,7 @@ redis:
     enabled: true
     serviceMonitor: *service-monitor
 server:
+  replicas: 2
   allowAnyNamespace: true
   ingress:
     enabled: true
@@ -53,10 +56,12 @@ server:
     enabled: true
     serviceMonitor: *service-monitor
 notifications:
+  replicas: 2
   metrics:
     enabled: true
     serviceMonitor: *service-monitor
 repoServer:
+  replicas: 2
   serviceAccount:
     create: true
     name: argocd-repo-server
