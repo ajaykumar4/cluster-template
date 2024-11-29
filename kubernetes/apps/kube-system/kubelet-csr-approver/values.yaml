@@ -1,7 +1,0 @@
----
-providerRegex: ^(rpi01|rpi02|rpi03|jetson01|jetson02)$
-bypassDnsResolution: true
-metrics:
-  enable: true
-  serviceMonitor:
-    enabled: true
