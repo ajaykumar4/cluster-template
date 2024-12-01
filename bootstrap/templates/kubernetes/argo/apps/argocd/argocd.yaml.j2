@@ -27,6 +27,7 @@ spec:
     namespace: argo-system
   syncPolicy:
     automated:
+      allowEmpty: true
       prune: true
       selfHeal: true
     syncOptions:
