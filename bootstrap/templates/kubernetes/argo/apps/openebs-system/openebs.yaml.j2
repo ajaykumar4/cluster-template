@@ -1,0 +1,32 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openebs
+  namespace: argo-system
+  annotations:
+    argocd.argoproj.io/sync-wave: '0'
+spec:
+  project: home-kubernetes
+  sources:
+    - repoURL: #{ bootstrap_github_address }#
+      path: kubernetes/apps/openebs-system/openebs
+      targetRevision: #{ bootstrap_github_branch|default('main', true) }#
+      ref: repo
+    - repoURL: openebs.github.io/openebs
+      chart: openebs
+      targetRevision: 4.1.1
+      helm:
+        releaseName: openebs
+        valueFiles:
+          - $repo/kubernetes/apps/openebs-system/openebs/values.yaml
+  destination:
+    name: in-cluster
+    namespace: openebs-system
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
