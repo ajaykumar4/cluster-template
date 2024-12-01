@@ -13,7 +13,7 @@ spec:
       path: kubernetes/apps/openebs-system/openebs
       targetRevision: #{ bootstrap_github_branch|default('main', true) }#
       ref: repo
-    - repoURL: openebs.github.io/openebs
+    - repoURL: https://openebs.github.io/openebs
       chart: openebs
       targetRevision: 4.1.1
       helm:
