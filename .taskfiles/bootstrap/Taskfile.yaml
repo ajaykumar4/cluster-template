@@ -31,8 +31,19 @@ tasks:
       - test -f {{.TALHELPER_CONFIG_FILE}}
       - which talhelper sops
 
+  install-helm-secrets:
+    cmds:
+      - |
+        if ! helm plugin list | grep -q secrets; then
+          echo "Helm Secrets plugin not found, installing..."
+          helm plugin install https://github.com/jkroepke/helm-secrets
+        else
+          echo "Helm Secrets plugin is already installed, skipping..."
+        fi
+
   apps:
     desc: Bootstrap apps into the Talos cluster
+    deps: [install-helm-secrets]
     cmds:
       - until kubectl wait --for=condition=Ready=False nodes --all --timeout=600s; do sleep 10; done
       - kubectl create namespace argo-system --dry-run=client -o yaml | kubectl apply --server-side --filename -
