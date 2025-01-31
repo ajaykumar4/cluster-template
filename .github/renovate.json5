@@ -29,6 +29,9 @@
   "kustomize": {
     "fileMatch": ["(^|/)kustomization\\.ya?ml(?:\\.j2)?$"]
   },
+  "mise": {
+    "fileMatch": ["(^|/)\\.?mise\\.toml$"]
+  },
   "pip_requirements": {
     "fileMatch": ["(^|/)[\\w-]*requirements(-\\w+)?\\.(txt|pip)(?:\\.j2)?$"]
   },
