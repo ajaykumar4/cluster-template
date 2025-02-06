@@ -11,11 +11,11 @@ run = "uv pip install -r requirements.txt"
 [tools]
 # Template tools
 python = "3.13"
-uv = "0.5.26"
+uv = "0.5.28"
 # Operations tools
-"aqua:argoproj/argo-cd" = "2.13.4"
+"aqua:argoproj/argo-cd" = "2.14.2"
 "aqua:budimanjojo/talhelper" = "3.0.17"
-"aqua:cloudflare/cloudflared" = "2025.1.1"
+"aqua:cloudflare/cloudflared" = "2025.2.0"
 "aqua:FiloSottile/age" = "1.2.1"
 "aqua:getsops/sops" = "3.9.4"
 "aqua:go-task/task" = "3.41.0"
