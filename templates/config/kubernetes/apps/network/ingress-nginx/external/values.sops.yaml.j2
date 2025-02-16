@@ -49,8 +49,10 @@ controller:
       enabled: true
       namespaceSelector:
         any: true
+  #% if cloudflare.enabled %#
   extraArgs:
     default-ssl-certificate: "network/#{ cloudflare.domain.replace('.', '-') }#-#{ 'production' if cloudflare.acme.production else 'staging' }#-tls"
+  #% endif %#
   resources:
     requests:
       cpu: 100m
