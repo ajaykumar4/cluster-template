@@ -25,11 +25,7 @@ tasks:
   apps:
     desc: Bootstrap apps into the Talos cluster
     cmds:
-      - until kubectl wait --for=condition=Ready=False nodes --all --timeout=600s; do sleep 10; done
-      - for: { var: APPLY_NAMESPACES }
-        cmd: kubectl create namespace {{base .ITEM}} --dry-run=client --output=yaml | kubectl apply --server-side --filename -
-      - for: { var: APPLY_SECRETS }
-        cmd: sops exec-file {{.ITEM}} "kubectl --namespace argo-system apply --server-side --filename {}"
+      - bash {{.KUBERNETES_DIR}}/bootstrap/apps/resources/prepare.sh
       - helmfile --file {{.KUBERNETES_DIR}}/bootstrap/apps/helmfile.yaml apply --skip-diff-on-install --suppress-diff
       - kubectl apply --server-side --filename {{.KUBERNETES_DIR}}/argo
     vars:
@@ -41,4 +37,4 @@ tasks:
       - test -f {{.KUBECONFIG}}
       - test -f {{.KUBERNETES_DIR}}/bootstrap/apps/helmfile.yaml
       - test -f {{.SOPS_AGE_KEY_FILE}}
-      - which helmfile kubectl sops
+      - which helmfile
