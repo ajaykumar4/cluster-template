@@ -38,6 +38,6 @@ releases:
   - name: argo-cd
     namespace: argo-system
     chart: oci://ghcr.io/argoproj/argo-helm/argo-cd
-    version: 7.8.2
+    version: 7.8.4
     secrets: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/argo-system/argo-cd/values.sops.yaml']
     needs: ['cert-manager/cert-manager']
