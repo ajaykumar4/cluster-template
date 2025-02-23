@@ -1,64 +1,70 @@
 ---
-  # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-  name: "e2e"
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "e2e"
 
-  on:
-    workflow_dispatch:
-    pull_request:
-      branches: ["main"]
-      paths-ignore:
-        - kubernetes/**
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - kubernetes/**
 
-  concurrency:
-    group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
-    cancel-in-progress: true
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
 
-  jobs:
-    configure:
-      if: ${{ github.repository == 'ajaykumar4/cluster-template' }}
-      name: configure
-      runs-on: ubuntu-latest
-      strategy:
-        fail-fast: false
-        matrix:
-          config-files:
-            - cloudflare
-            - private
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+jobs:
+  configure:
+    if: ${{ github.repository == 'onedr0p/cluster-template' }}
+    name: configure
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config-files:
+          - cloudflare
+          - argo
+          - private
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - name: Setup mise
-          uses: jdx/mise-action@v2
-          env:
-            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-        - name: Install dependencies
-          run: mise run deps
+      - name: Install dependencies
+        run: mise run deps
 
-        - name: Run init task
-          run: task init
+      - name: Run init task
+        run: task init
 
-        - name: Prepare files
-          run: |
-            cp ./.github/tests/${{ matrix.config-files }}.yaml config.yaml
-            echo '{"AccountTag":"fake","TunnelSecret":"fake","TunnelID":"fake"}' > cloudflared.json
-            touch kubeconfig
+      - name: Prepare files
+        run: |
+          cp ./.github/tests/${{ matrix.config-files }}.yaml config.yaml
+          echo '{"AccountTag":"fake","TunnelSecret":"fake","TunnelID":"fake"}' > cloudflared.json
+          touch kubeconfig
 
-        - name: Run configure task
-          run: task configure --yes
+      - name: Run configure task
+        run: task configure --yes
 
-        - name: Run generate talconfig task
-          run: |
-            FILENAME=kubernetes/bootstrap/talos/talsecret.sops.yaml
-            talhelper gensecret | sops --filename-override $FILENAME --encrypt /dev/stdin > $FILENAME
-            task talos:generate-config
+      - name: Run generate talconfig task
+        run: |
+          FILENAME=talos/talsecret.sops.yaml
+          talhelper gensecret | sops --filename-override $FILENAME --encrypt /dev/stdin > $FILENAME
+          task talos:generate-config
 
-        - name: Dry run bootstrap talos task
-          run: task bootstrap:talos --dry
+      - name: Run flux-local test
+        uses: docker://ghcr.io/allenporter/flux-local:v7.0.0@sha256:abf237e31d20de26f8a4b08e588cc927cb0a9f0ecf90d04bada00f393b919354
+        with:
+          args: test --enable-helm --all-namespaces --path /github/workspace/kubernetes/flux/cluster -v
 
-        - name: Dry run bootstrap apps task
-          run: task bootstrap:apps --dry
+      - name: Dry run bootstrap talos task
+        run: task bootstrap:talos --dry
 
-        - name: Run cleanup task
-          run: task template:tidy --yes
+      - name: Dry run bootstrap apps task
+        run: task bootstrap:apps --dry
+
+      - name: Run cleanup task
+        run: task template:tidy --yes

@@ -19,25 +19,25 @@ releases:
     namespace: kube-system
     chart: cilium/cilium
     version: 1.17.1
-    values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/kube-system/cilium/values.yaml']
+    values: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/kube-system/cilium/values.yaml']
 
   - name: coredns
     namespace: kube-system
     chart: oci://ghcr.io/coredns/charts/coredns
     version: 1.39.0
-    values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/kube-system/coredns/values.yaml']
+    values: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/kube-system/coredns/values.yaml']
     needs: ['kube-system/cilium']
 
   - name: cert-manager
     namespace: cert-manager
     chart: jetstack/cert-manager
     version: v1.17.1
-    values: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/cert-manager/cert-manager/values.yaml']
+    values: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/cert-manager/cert-manager/values.yaml']
     needs: ['kube-system/coredns']
 
   - name: argo-cd
     namespace: argo-system
     chart: oci://ghcr.io/argoproj/argo-helm/argo-cd
     version: 7.8.2
-    secrets: ['{{ requiredEnv "KUBERNETES_DIR" }}/apps/argo-system/argo-cd/values.sops.yaml']
+    secrets: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/argo-system/argo-cd/values.sops.yaml']
     needs: ['cert-manager/cert-manager']

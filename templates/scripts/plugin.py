@@ -3,10 +3,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
-
-from typing import Any
 from netaddr import IPNetwork
-
 from datetime import datetime
 
 import makejinja
@@ -70,7 +67,6 @@ def cloudflare_tunnel(value: str) -> str:
         raise FileNotFoundError(f"File not found: cloudflared.json") from e
 
 
-
 # Return the GitHub deploy key from deploy.key
 def deploy_key() -> str:
     try:
@@ -83,7 +79,7 @@ def deploy_key() -> str:
 
 # Return a list of files in the talos patches directory
 def talos_patches(value: str) -> list[str]:
-    path = Path(f'templates/config/kubernetes/bootstrap/talos/patches/{value}')
+    path = Path(f'templates/config/talos/patches/{value}')
     if not path.is_dir():
         return []
     return [str(f) for f in sorted(path.glob('*.yaml.j2')) if f.is_file()]

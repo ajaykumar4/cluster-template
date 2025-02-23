@@ -1,9 +1,13 @@
 [env]
 _.python.venv = { path = "{{config_root}}/.venv", create = true }
+ROOT_DIR = "{{config_root}}"
 KUBERNETES_DIR = '{{config_root}}/kubernetes'
+SCRIPTS_DIR = '{{config_root}}/scripts'
+BOOTSTRAP_DIR = '{{config_root}}/bootstrap'
+TALOS_DIR = '{{config_root}}/talos'
 KUBECONFIG = "{{config_root}}/kubeconfig"
 SOPS_AGE_KEY_FILE = "{{config_root}}/age.key"
-TALOSCONFIG = "{{config_root}}/kubernetes/bootstrap/talos/clusterconfig/talosconfig"
+TALOSCONFIG = "{{config_root}}/talos/clusterconfig/talosconfig"
 
 [tasks.deps]
 description = "Install dependencies"
@@ -16,7 +20,6 @@ uv = "latest"
 # Operations tools
 "aqua:argoproj/argo-cd" = "2.14.2"
 "aqua:budimanjojo/talhelper" = "3.0.19"
-"aqua:charmbracelet/gum" = "v0.15.2"
 "aqua:cloudflare/cloudflared" = "2025.2.0"
 "aqua:FiloSottile/age" = "1.2.1"
 "aqua:getsops/sops" = "3.9.4"
