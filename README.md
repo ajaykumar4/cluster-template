@@ -350,4 +350,4 @@ If this repo is too hot to handle or too cold to hold check out these following 
 
 ## 🤝 Thanks
 
-Big shout out to a[onedr0p](https://github.com/onedr0p)
+Big shout out to [onedr0p](https://github.com/onedr0p)
