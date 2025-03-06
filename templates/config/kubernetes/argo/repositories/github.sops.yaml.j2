@@ -11,12 +11,12 @@ metadata:
     argocd.argoproj.io/secret-type: repository
 stringData:
   type: git
-  #% if github.private | default(false) %#
-  url: "git@github.com:#{ github.repository }#.git"
+  #% if repository_visibility == 'private' %#
+  url: "ssh://git@github.com:#{ repository_name }#.git"
   sshPrivateKey: |
     #% filter indent(width=4, first=False) %#
-    #{ deploy_key() }#
+    #{ github_deploy_key() }#
     #%- endfilter %#
   #% else %#
-  url: "https://github.com/#{ github.repository }#.git"
+  url: "https://github.com/#{ repository_name }#.git"
   #% endif %#

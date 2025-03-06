@@ -7,18 +7,18 @@ data:
   config.yaml: |
     ---
     originRequest:
-      originServerName: "external.#{ cloudflare.domain }#"
+      originServerName: "external.#{ cloudflare_domain }#"
 
     ingress:
-      - hostname: "#{ cloudflare.domain }#"
+      - hostname: "#{ cloudflare_domain }#"
         service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
-        #% if not cloudflare.acme.production %#
+        #% if cloudflare_cluster_issuer == 'staging' %#
         originRequest:
           noTLSVerify: true
         #% endif %#
-      - hostname: "*.#{ cloudflare.domain }#"
+      - hostname: "*.#{ cloudflare_domain }#"
         service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
-        #% if not cloudflare.acme.production %#
+        #% if cloudflare_cluster_issuer == 'staging' %#
         originRequest:
           noTLSVerify: true
         #% endif %#

@@ -9,9 +9,9 @@ metadata:
 spec:
   project: kubernetes
   sources:
-    - repoURL: "https://github.com/#{ github.repository }#.git"
+    - repoURL: "https://github.com/#{ repository_name }#.git"
       path: kubernetes/apps/kube-system/cilium
-      targetRevision: #{ github.branch }#
+      targetRevision: #{ repository_branch }#
       ref: repo
     - repoURL: https://helm.cilium.io
       chart: cilium

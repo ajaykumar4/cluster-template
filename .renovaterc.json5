@@ -43,7 +43,7 @@
     {
       "description": ["Argo Operator Group"],
       "groupName": "Argo Operator",
-      "matchPackagePatterns": ["argo-cd"],
+      "matchPackageNames": ["/argo-cd/"],
       "matchDatasources": ["docker"],
       "group": {
         "commitMessageTopic": "{{{groupName}}} group"

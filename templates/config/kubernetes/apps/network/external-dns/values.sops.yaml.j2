@@ -19,7 +19,7 @@ policy: sync
 sources: ["crd", "ingress"]
 txtPrefix: k8s.
 txtOwnerId: default
-domainFilters: ["#{ cloudflare.domain }#"]
+domainFilters: ["#{ cloudflare_domain }#"]
 serviceMonitor:
   enabled: true
 podAnnotations:

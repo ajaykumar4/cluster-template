@@ -8,9 +8,9 @@ spec:
   project: default
 
   source:
-    repoURL: "https://github.com/#{ github.repository }#.git"
+    repoURL: "https://github.com/#{ repository_name }#.git"
     path: kubernetes/argo/apps
-    targetRevision: #{ github.branch }#
+    targetRevision: #{ repository_branch }#
     directory:
       recurse: true
 

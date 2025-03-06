@@ -53,37 +53,6 @@ function apply_namespaces() {
     done
 }
 
-# ConfigMaps to be applied after the helmfile charts are installed
-function apply_configmaps() {
-    log debug "Applying ConfigMaps"
-
-    local -r configmaps=(
-        "${ROOT_DIR}/kubernetes/components/common/apps.yaml"
-        "${ROOT_DIR}/kubernetes/components/common/repositories.yaml"
-        "${ROOT_DIR}/kubernetes/components/common/settings.yaml"
-    )
-
-    for configmap in "${configmaps[@]}"; do
-        if [ ! -f "${configmap}" ]; then
-            log warn "File does not exist" file "${configmap}"
-            continue
-        fi
-
-        # Check if the configmap resources are up-to-date
-        if kubectl --namespace argo-system diff --filename "${configmap}" &>/dev/null; then
-            log info "ConfigMap resource is up-to-date" "resource=$(basename "${configmap}" ".yaml")"
-            continue
-        fi
-
-        # Apply configmap resources
-        if kubectl --namespace argo-system apply --server-side --filename "${configmap}" &>/dev/null; then
-            log info "ConfigMap resource applied successfully" "resource=$(basename "${configmap}" ".yaml")"
-        else
-            log error "Failed to apply ConfigMap resource" "resource=$(basename "${configmap}" ".yaml")"
-        fi
-    done
-}
-
 # SOPS secrets to be applied before the helmfile charts are installed
 function apply_sops_secrets() {
     log debug "Applying secrets"
@@ -130,6 +99,37 @@ function apply_helm_releases() {
     log info "Helm releases applied successfully"
 }
 
+# Apply Argo Cluster Bootstrapping
+function apply_argo_bootstrapping() {
+    log debug "Applying Argo Bootstrapping"
+
+    local -r bootstrappingmaps=(
+        "${ROOT_DIR}/kubernetes/components/common/apps.yaml"
+        "${ROOT_DIR}/kubernetes/components/common/repositories.yaml"
+        "${ROOT_DIR}/kubernetes/components/common/settings.yaml"
+    )
+
+    for bootstrappingmap in "${bootstrappingmaps[@]}"; do
+        if [ ! -f "${bootstrappingmap}" ]; then
+            log warn "File does not exist" file "${bootstrappingmap}"
+            continue
+        fi
+
+        # Check if the bootstrappingmap resources are up-to-date
+        if kubectl --namespace argo-system diff --filename "${bootstrappingmap}" &>/dev/null; then
+            log info "bootstrappingmap resource is up-to-date" "resource=$(basename "${bootstrappingmap}" ".yaml")"
+            continue
+        fi
+
+        # Apply bootstrappingmap resources
+        if kubectl --namespace argo-system apply --server-side --filename "${bootstrappingmap}" &>/dev/null; then
+            log info "bootstrappingmap resource applied successfully" "resource=$(basename "${bootstrappingmap}" ".yaml")"
+        else
+            log error "Failed to apply bootstrappingmap resource" "resource=$(basename "${bootstrappingmap}" ".yaml")"
+        fi
+    done
+}
+
 function main() {
     check_cli helmfile kubectl kustomize sops talhelper yq
 
@@ -138,7 +138,7 @@ function main() {
     apply_namespaces
     apply_sops_secrets
     apply_helm_releases
-    apply_configmaps
+    apply_argo_bootstrapping
 
     log info "Congrats! The cluster is bootstrapped and Argo is syncing the Git repository"
 }

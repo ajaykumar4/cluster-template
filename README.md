@@ -1,22 +1,15 @@
 # ⛵ Cluster Template
 
-Welcome to my opinionated and extensible template for deploying a single Kubernetes cluster. The goal of this project is to make it easier for people interested in using Kubernetes to deploy a cluster at home on bare-metal or VMs. This template closely mirrors onedr0p [cluster-template](https://github.com/onedr0p/cluster-template) repository.
+Welcome to my opinionated and extensible template for deploying a single Kubernetes cluster. The goal of this project is to make it easier for people interested in using Kubernetes to deploy a cluster at home on bare-metal or VMs. This template closely mirrors [onedr0p/cluster-template](https://github.com/onedr0p/cluster-template) repository.
 
-At a high level this project makes use of [makejinja](https://github.com/mirkolenz/makejinja) to read in a [configuration file](./config.sample.yaml) which renders out templates that will allow you to install and manage your Kubernetes cluster with.
+At a high level this project makes use of [makejinja](https://github.com/mirkolenz/makejinja) to read in configuration files ([cluster.yaml](./cluster.sample.yaml) & [nodes.yaml](./nodes.sample.yaml)). Makejinja will render out templates that will allow you to install a Kubernetes cluster with the features mentioned below.
 
 ## ✨ Features
 
-The features included will depend on the type of configuration you want to use. There are currently **2 different types** of **configurations** available with this template.
+A Kubernetes cluster deployed on-top of [Talos Linux](https://github.com/siderolabs/talos) with an opinionated implementation of [Argo](https://github.com/argoproj/argo-cd) using [GitHub](https://github.com/) as the Git provider, [sops](https://github.com/getsops/sops) to manage secrets and [cloudflared](https://github.com/cloudflare/cloudflared) to access applications external to your local network.
 
-1. **"Argo cluster"** - a Kubernetes cluster deployed on-top of [Talos Linux](https://github.com/siderolabs/talos) with an opinionated implementation of [Argo](https://github.com/argoproj/argo-cd) using [GitHub](https://github.com/) as the Git provider and [sops](https://github.com/getsops/sops) to manage secrets.
-
-    - **Required:** Some knowledge of [Containers](https://opencontainers.org/), [YAML](https://yaml.org/), and [Git](https://git-scm.com/).
-    - **Components:** [argo](https://github.com/argoproj/argo-cd), [cilium](https://github.com/cilium/cilium), [cert-manager](https://github.com/cert-manager/cert-manager), [spegel](https://github.com/spegel-org/spegel), [reloader](https://github.com/stakater/Reloader).
-
-2. **"Argo cluster with Cloudflare"** - An addition to "**Argo cluster**" that provides DNS and SSL with [Cloudflare](https://www.cloudflare.com/). [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) is also included to provide external access to certain applications deployed in your cluster.
-
-    - **Required:** A Cloudflare account with a domain managed in your Cloudflare account.
-    - **Components:** [ingress-nginx](https://github.com/kubernetes/ingress-nginx/), [external-dns](https://github.com/kubernetes-sigs/external-dns) and [cloudflared](https://github.com/cloudflare/cloudflared).
+- **Required:** Some knowledge of [Containers](https://opencontainers.org/), [YAML](https://yaml.org/), [Git](https://git-scm.com/), and a **Cloudflare account** with a **domain**.
+- **Included components:** [argo](https://github.com/argoproj/argo-cd), [cilium](https://github.com/cilium/cilium), [cert-manager](https://github.com/cert-manager/cert-manager), [spegel](https://github.com/spegel-org/spegel), [reloader](https://github.com/stakater/Reloader), [ingress-nginx](https://github.com/kubernetes/ingress-nginx/), [external-dns](https://github.com/kubernetes-sigs/external-dns) and [cloudflared](https://github.com/cloudflare/cloudflared).
 
 **Other features include:**
 
@@ -24,23 +17,21 @@ The features included will depend on the type of configuration you want to use. 
 - Workflow automation w/ [GitHub Actions](https://github.com/features/actions)
 - Dependency automation w/ [Renovate](https://www.mend.io/renovate)
 
+Does this sound cool to you? If so, continue to read on.
+
 ## 🚀 Let's Go!
 
-There are **4 stages** outlined below for completing this project, make sure you follow the stages in order.
+There are **5 stages** outlined below for completing this project, make sure you follow the stages in order.
 
 ### Stage 1: Machine Preparation
 
-**System Requirements**
-
 > [!IMPORTANT]
-> 1. The included behaviour of Talos is that all nodes are able to run workloads, **including** the controller nodes. **Worker nodes** are therefore **optional**.
-> 2. If you have 3 or more nodes it is recommended to make 3 of them controller nodes for a highly available control plane.
-
-| Role    | Cores    | Memory        | System Disk               |
-|---------|----------|---------------|---------------------------|
-| Control | 4 _(6*)_ | 8GB _(24GB*)_ | 120GB _(500GB*)_ SSD/NVMe |
-| Worker  | 4 _(6*)_ | 8GB _(24GB*)_ | 120GB _(500GB*)_ SSD/NVMe |
-| _\* recommended_ |
+> If you have **3 or more nodes** it is recommended to make 3 of them controller nodes for a highly available control plane. This project configures **all nodes** to be able to run workloads. **Worker nodes** are therefore **optional**.
+>
+> **Minimum system requirements**
+> | Role    | Cores    | Memory        | System Disk               |
+> |---------|----------|---------------|---------------------------|
+> | Control/Worker | 4 | 16GB | 256GB SSD/NVMe |
 
 1. Head over to the [Talos Linux Image Factory](https://factory.talos.dev) and follow the instructions. Be sure to only choose the **bare-minimum system extensions** as some might require additional configuration and prevent Talos from booting without it. You can always add system extensions after Talos is installed and working.
 
@@ -48,46 +39,65 @@ There are **4 stages** outlined below for completing this project, make sure you
 
 3. Flash the Talos ISO or RAW image to a USB drive and boot from it on your nodes.
 
-4. Verify with `nmap`that all your nodes are available on your network before you move on. Replace `192.168.0.0/24` with the network your nodes are on.
+4. Verify with `nmap` that your nodes are available on the network. (Replace `192.168.1.0/24` with the network your nodes are on.)
 
     ```sh
-    nmap -Pn -n -p 50000 192.168.0.0/24 -vv | grep 'Discovered'
+    nmap -Pn -n -p 50000 192.168.1.0/24 -vv | grep 'Discovered'
     ```
 
 ### Stage 2: Local Workstation
 
-1. Create a new **public** repository by clicking the big green "Use this template" button at the top of this page.
+> [!TIP]
+> It is recommended to set the visibility of your repository to `Public` so you can easily request help if you get stuck.
 
-2. Use `git clone` to download **the repo you just created** to your local workstation and `cd` into it.
+1. Create a new repository by clicking the green `Use this template` button at the top of this page, then clone the new repo you just created and `cd` into it. Alternatively you can us the [GitHub CLI](https://cli.github.com/) ...
 
-3. **Install** and **activate** [mise](https://mise.jdx.dev/) following the instructions for your workstation [here](https://mise.jdx.dev/getting-started.html).
+    ```sh
+    export REPONAME="home-ops"
+    gh repo create $REPONAME --template ajaykumar4/cluster-template --disable-wiki --public --clone && cd $REPONAME
+    ```
 
-4. Use `mise` to install the **required** CLI tools:
+2. **Install** and **activate** [mise](https://mise.jdx.dev/) following the instructions for your workstation [here](https://mise.jdx.dev/getting-started.html).
+
+3. Use `mise` to install the **required** CLI tools:
 
    📍 _If `mise` is having trouble compiling Python, try running `mise settings python.compile=0` and try these commands again_
 
     ```sh
-    mise trust
-    mise install
-    mise run deps
+    mise trust && mise install && mise run deps
     ```
 
-### Stage 3: Template Configuration
+### Stage 3: Cloudflare configuration
 
-> [!IMPORTANT]
-> The [config.sample.yaml](./config.sample.yaml) file contains config that are **vital** to the template process.
+> [!WARNING]
+> If any of the commands fail with `command not found` or `unknown command` it means `mise` is either not install or configured incorrectly.
 
-1. Generate the `config.yaml` from the [config.sample.yaml](./config.sample.yaml) configuration file:
+1. Create a Cloudflare API token for use with cloudflared and external-dns by reviewing the official [documentation](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) and following the instructions below.
 
-   📍 _If the below command fails `mise` is either not install or configured incorrectly._
+   - Click the blue `Use template` button for the `Edit zone DNS` template.
+   - Name your token `kubernetes`
+   - Under `Permissions`, click `+ Add More` and add permissions `Zone - DNS - Edit` and `Account - Cloudflare Tunnel - Read`
+   - Limit the permissions to a specific account and/or zone resources and then click `Continue to Summary` and then `Create Token`.
+   - **Save this token somewhere safe**, you will need it later on.
+
+2. Create the Cloudflare Tunnel:
+
+    ```sh
+    cloudflared tunnel login
+    cloudflared tunnel create --credentials-file cloudflare-tunnel.json kubernetes
+    ```
+
+### Stage 4: Cluster configuration
+
+1. Generate the config files from the sample files:
 
     ```sh
     task init
     ```
 
-2. Fill out the `config.yaml` configuration file using the comments in that file as a guide.
+2. Fill out `cluster.yaml` and `nodes.yaml` configuration files using the comments in those file as a guide.
 
-3. Template out all the configuration files:
+3. Template out the kubernetes and talos configuration files, if any issues come up be sure to read the error and adjust your config files accordingly.
 
     ```sh
     task configure
@@ -103,11 +113,15 @@ There are **4 stages** outlined below for completing this project, make sure you
     git push
     ```
 
-### Stage 4: Bootstrap Talos, Kubernetes, and Argo
+> [!TIP]
+> Using a **private repository**? Make sure to paste the public key from `github-deploy.key.pub` into the deploy keys section of your GitHub repository settings. This will make sure Argo has read/write access to your repository.
+
+### Stage 5: Bootstrap Talos, Kubernetes, and Argo
+
+> [!WARNING]
+> It might take a while for the cluster to be setup (10+ minutes is normal). During which time you will see a variety of error messages like: "couldn't get current server API group list," "error: no matching resources found", etc. 'Ready' will remain "False" as no CNI is deployed yet. **This is a normal.** If this step gets interrupted, e.g. by pressing <kbd>Ctrl</kbd> + <kbd>C</kbd>, you likely will need to [reset the cluster](#-reset) before trying again
 
 1. Install Talos:
-
-   📍 _It might take a while for the cluster to be setup (10+ minutes is normal). During which time you will see a variety of error messages like: "couldn't get current server API group list," "error: no matching resources found", etc. 'Ready' will remain "False" as no CNI is deployed yet. **This is a normal.** If this step gets interrupted, e.g. by pressing <kbd>Ctrl</kbd> + <kbd>C</kbd>, you likely will need to [reset the cluster](#-reset) before trying again_
 
     ```sh
     task bootstrap:talos
@@ -129,61 +143,76 @@ There are **4 stages** outlined below for completing this project, make sure you
 
 4. Watch the rollout of your cluster happen:
 
-   📍 _Depending on the features you choose a successful rollout will include pods being deployed into the **cert-manager, argo-system and network** namespaces_
-
     ```sh
-    watch kubectl get pods --all-namespaces
+    kubectl get pods --all-namespaces --watch
     ```
 
-## 📣 Argo w/ Cloudflare post installation
+## 📣 Post installation
 
 ### 🌐 Public DNS
 
 > [!TIP]
 > Use the `external` ingress class to make applications public to the internet.
 
-The `external-dns` application created in the `networking` namespace will handle creating public DNS records. By default, `echo-server` and the `argo` are the only subdomains reachable from the public internet. In order to make additional applications public you must set set the correct ingress class name and ingress annotations like in the HelmRelease for `echo-server`.
+The `external-dns` application created in the `networking` namespace will handle creating public DNS records. By default, `echo-server` and the `argo` are the only subdomains reachable from the public internet. In order to make additional applications public you must set the correct ingress class name and ingress annotations like in the Helm values for `echo-server`.
 
 ### 🏠 Home DNS
 
 > [!TIP]
 > Use the `internal` ingress class to make applications private to your network. If you're having trouble with internal DNS resolution check out [this](https://github.com/onedr0p/cluster-template/discussions/719) GitHub discussion.
 
-`k8s_gateway` will provide DNS resolution to external Kubernetes resources (i.e. points of entry to the cluster) from any device that uses your home DNS server. For this to work, your home DNS server must be configured to forward DNS queries for `${cloudflare.domain}` to `${cloudflare.gateway_vip}` instead of the upstream DNS server(s) it normally uses. This is a form of **split DNS** (aka split-horizon DNS / conditional forwarding).
+`k8s_gateway` will provide DNS resolution to external Kubernetes resources (i.e. points of entry to the cluster) from any device that uses your home DNS server. For this to work, your home DNS server must be configured to forward DNS queries for `${cloudflare_domain}` to `${cluster_dns_gateway_addr}` instead of the upstream DNS server(s) it normally uses. This is a form of **split DNS** (aka split-horizon DNS / conditional forwarding).
 
 ... Nothing working? That is expected, this is DNS after all!
 
 ### 📜 Certificates
 
-By default this template will deploy a wildcard certificate using the Let's Encrypt **staging environment**, which prevents you from getting rate-limited by the Let's Encrypt production servers if your cluster doesn't deploy properly (for example due to a misconfiguration). Once you are sure you will keep the cluster up for more than a few hours be sure to switch to the production servers as outlined in `config.yaml`.
+> [!WARNING]
+> By default this template will deploy a wildcard certificate using the Let's Encrypt **staging environment**, which prevents you from getting rate-limited by the Let's Encrypt production servers if your cluster doesn't deploy properly (for example due to a misconfiguration).
+
+Steps to update to the Let's Encrypt **production environment**:
+
+1. In `cluster.yaml` update `cloudflare_cluster_issuer` to `production`
+2. Run `task configure`
+3. Push your changes to git:
+
+    ```sh
+    git add -A
+    git commit -m "chore: switch to le-prod :scroll:"
+    git push
+    ```
+
+4. Wait for your certificate to be created, you can check the status by running:
+
+    ```sh
+    kubectl -n cert-manager describe certificate <name>
+    ```
 
 ### 🪝 Github Webhook
 
-By default Argo will periodically check your git repository for changes. In order to have Argo reconcile on `git push` you must configure Github to send `push` events to Argo.
+By default Argo will periodically check your git repository for changes. In-order to have Argo reconcile on `git push` you must configure Github to send `push` events to Argo.
 
-> [!IMPORTANT]
-> This will only work after you have switched over certificates to the Let's Encrypt Production servers.
+1. Piece together the full URL with the webhook path appended:
 
-1. Full URL with the webhook path appended:
     ```text
-    https://argo.${cloudflare.domain}/api/webhook
+    https://argo.${cloudflare_domain}/api/webhook
     ```
 
-2. Navigate to the settings of your repository on Github, under "Settings/Webhooks" press the "Add webhook" button. Fill in the webhook URL and your `${github.webhook_token}` secret in `config.yaml`, Content type: `application/json`, Events: Choose Just the push event, and save.
+2. Navigate to the settings of your repository on Github, under "Settings/Webhooks" press the "Add webhook" button. Fill in the webhook URL and your token from `github-push-token.txt`, Content type: `application/json`, Events: Choose Just the push event, and save.
 
 ## 💥 Reset
 
-There might be a situation where you want to destroy your Kubernetes cluster. The following command will reset your nodes back to maintenance mode, append `--force` to completely format your the Talos installation. Either way the nodes should reboot after the command has sucessfully ran.
+There might be a situation where you want to destroy your Kubernetes cluster. The following command will reset your nodes back to maintenance mode.
 
 ```sh
-task talos:reset # --force
+task talos:reset
 ```
 
 ## 🛠️ Talos and Kubernetes Maintenance
 
 ### ⚙️ Updating Talos node configuration
 
-> [!IMPORTANT]
+> [!TIP]
 > Ensure you have updated `talconfig.yaml` and any patches with your updated configuration. In some cases you **not only need to apply the configuration but also upgrade talos** to apply new configuration.
 
 ```sh
@@ -196,7 +225,7 @@ task talos:apply-node IP=? MODE=?
 
 ### ⬆️ Updating Talos and Kubernetes versions
 
-> [!IMPORTANT]
+> [!TIP]
 > Ensure the `talosVersion` and `kubernetesVersion` in `talconfig.yaml` are up-to-date with the version you wish to upgrade to.
 
 ```sh
@@ -223,10 +252,10 @@ The base Renovate configuration in your repository can be viewed at [.github/ren
 
 Below is a general guide on trying to debug an issue with an resource or application. For example, if a workload/resource is not showing up or a pod has started but in a `CrashLoopBackOff` or `Pending` state. Most of these steps do not include a way to fix the problem as the problem could be one of many different things.
 
-1. Verify all Argo Applications  are up-to-date and in a ready state.
+1. Verify all Argo Applications are up-to-date and in a ready state.
 
     ```sh
-      kubectl get applications -n argo-system
+    kubectl get applications -n argo-system
     ```
 
 2. Do you see the pod of the workload you are debugging?
@@ -284,11 +313,12 @@ The cluster is your oyster (or something like that). Below are some optional con
 
 ### DNS
 
-Instead of using [k8s_gateway](https://github.com/ori-edge/k8s_gateway) to provide DNS for your applications you might want to check out [external-dns](https://github.com/kubernetes-sigs/external-dns), it has wide support for many different providers such as [Pi-hole](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/pihole.md), [UniFi](https://github.com/kashalls/external-dns-unifi-webhook), [Adguard Home](https://github.com/muhlba91/external-dns-provider-adguard), [Bind](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/rfc2136.md) and more.
+Instead of using [k8s_gateway](https://github.com/ori-edge/k8s_gateway) to provide DNS for your applications you might want to check out [external-dns](https://github.com/kubernetes-sigs/external-dns), there is wide support for many different DNS providers such as [Pi-hole](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/pihole.md), [UniFi](https://github.com/kashalls/external-dns-unifi-webhook), [Adguard Home](https://github.com/muhlba91/external-dns-provider-adguard), [Bind](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/rfc2136.md) and more.
 
 ### Storage
 
-You might find you need persistent storage for your workloads with features like replicated block storage, or to connect to a NFS/SMB/iSCSI server. If you need any of those features be sure to check out the projects like [rook-ceph](https://github.com/rook/rook), [longhorn](https://github.com/longhorn/longhorn), [openebs](https://github.com/openebs/openebs), [democratic-csi](https://github.com/democratic-csi/democratic-csi), [csi-driver-nfs](https://github.com/kubernetes-csi/csi-driver-nfs), [csi-driver-smb](https://github.com/kubernetes-csi/csi-driver-smb) or [synology-csi](https://github.com/SynologyOpenSource/synology-csi).
+You might find you need persistent storage for your workloads with features like replicated storage or to connect to a NFS/SMB/iSCSI server. If you need any of those features be sure to check out the projects like [rook-ceph](https://github.com/rook/rook), [longhorn](https://github.com/longhorn/longhorn), [openebs](https://github.com/openebs/openebs), [democratic-csi](https://github.com/democratic-csi/democratic-csi), [csi-driver-nfs](https://github.com/kubernetes-csi/csi-driver-nfs), [csi-driver-smb](https://github.com/kubernetes-csi/csi-driver-smb)
+or [synology-csi](https://github.com/SynologyOpenSource/synology-csi).
 
 ### Community Repositories
 
@@ -298,8 +328,9 @@ Community member [@whazor](https://github.com/whazor) created [Kubesearch](https
 
 If this repo is too hot to handle or too cold to hold check out these following projects.
 
-- [onedr0p/cluster-template](https://github.com/onedr0p/cluster-template) - _A template for deploying a Talos Kubernetes cluster including Flux for GitOps._
+- [onedr0p/cluster-template](https://github.com/onedr0p/cluster-template) - _A template for deploying a Talos Kubernetes cluster including Flux for GitOps_
 - [khuedoan/homelab](https://github.com/khuedoan/homelab) - _Fully automated homelab from empty disk to running services with a single command._
+- [mitchross/k3s-argocd-starter](https://github.com/mitchross/k3s-argocd-starter) - starter kit for k3s, argocd
 - [ricsanfre/pi-cluster](https://github.com/ricsanfre/pi-cluster) - _Pi Kubernetes Cluster. Homelab kubernetes cluster automated with Ansible and FluxCD_
 - [techno-tim/k3s-ansible](https://github.com/techno-tim/k3s-ansible) - _The easiest way to bootstrap a self-hosted High Availability Kubernetes cluster. A fully automated HA k3s etcd install with kube-vip, MetalLB, and more. Build. Destroy. Repeat._
 
@@ -317,4 +348,6 @@ If this repo is too hot to handle or too cold to hold check out these following 
 
 </div>
 
-## 🤝 Thanks [onedr0p](https://github.com/onedr0p)
+## 🤝 Thanks
+
+Big shout out to a[onedr0p](https://github.com/onedr0p)

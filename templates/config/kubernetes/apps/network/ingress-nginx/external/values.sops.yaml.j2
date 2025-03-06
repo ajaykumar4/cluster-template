@@ -3,8 +3,8 @@ fullnameOverride: ingress-nginx-external
 controller:
   service:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: "external.#{ cloudflare.domain }#"
-      lbipam.cilium.io/ips: "#{ cloudflare.tunnel.ingress_vip }#"
+      external-dns.alpha.kubernetes.io/hostname: "external.#{ cloudflare_domain }#"
+      lbipam.cilium.io/ips: "#{ cloudflare_ingress_addr }#"
     externalTrafficPolicy: Cluster
   ingressClassResource:
     name: external
@@ -50,7 +50,7 @@ controller:
       namespaceSelector:
         any: true
   extraArgs:
-    default-ssl-certificate: "network/#{ cloudflare.domain.replace('.', '-') }#-#{ 'production' if cloudflare.acme.production else 'staging' }#-tls"
+    default-ssl-certificate: "network/#{ cloudflare_domain.replace('.', '-') }#-#{ cloudflare_cluster_issuer }#-tls"
   resources:
     requests:
       cpu: 100m

@@ -1,11 +1,11 @@
 ---
 fullnameOverride: k8s-gateway
-domain: "#{ cloudflare.domain }#"
+domain: "#{ cloudflare_domain }#"
 ttl: 1
 service:
   type: LoadBalancer
   port: 53
   annotations:
-    io.cilium/lb-ipam-ips: "#{ cloudflare.gateway_vip }#"
+    io.cilium/lb-ipam-ips: "#{ cluster_dns_gateway_addr }#"
   externalTrafficPolicy: Cluster
 watchedResources: ["Ingress", "Service"]

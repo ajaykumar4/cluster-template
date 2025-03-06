@@ -1,7 +1,7 @@
 crds:
   install: true
 global:
-  domain: "argo.#{ cloudflare.domain }#"
+  domain: "argo.#{ cloudflare_domain }#"
 configs:
   params:
     server.insecure: true
@@ -21,9 +21,9 @@ configs:
         clusters:
           - "*"
   secret:
-    argocdServerAdminPassword: #{ argo.password }#
+    argocdServerAdminPassword: #{ argo_password }#
     argocdServerAdminPasswordMtime: #{ current_datetime() }#
-    githubSecret: #{ github.webhook_token }#
+    githubSecret: #{ github_push_token() }#
 controller:
   replicas: 2
   metrics:
@@ -50,8 +50,8 @@ server:
     enabled: true
     ingressClassName: external
     annotations:
-      external-dns.alpha.kubernetes.io/target: "external.#{ cloudflare.domain }#"
-    hostname: "argo.#{ cloudflare.domain }#"
+      external-dns.alpha.kubernetes.io/target: "external.#{ cloudflare_domain }#"
+    hostname: "argo.#{ cloudflare_domain }#"
   metrics:
     enabled: true
     serviceMonitor: *service-monitor

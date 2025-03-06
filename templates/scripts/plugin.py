@@ -1,13 +1,9 @@
-import importlib.util
-import sys
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from netaddr import IPNetwork
 from datetime import datetime
 
 import makejinja
-import validation
 import re
 import json
 
@@ -33,7 +29,7 @@ def nthhost(value: str, query: int) -> str:
 def age_public_key() -> str:
     try:
         with open('age.key', 'r') as file:
-            file_content = file.read()
+            file_content = file.read().strip()
     except FileNotFoundError as e:
         raise FileNotFoundError(f"File not found: age.key") from e
     key_match = re.search(r"# public key: (age1[\w]+)", file_content)
@@ -46,7 +42,7 @@ def age_public_key() -> str:
 def age_private_key() -> str:
     try:
         with open('age.key', 'r') as file:
-            file_content = file.read()
+            file_content = file.read().strip()
     except FileNotFoundError as e:
         raise FileNotFoundError(f"File not found: age.key") from e
     key_match = re.search(r"(AGE-SECRET-KEY-[\w]+)", file_content)
@@ -55,25 +51,35 @@ def age_private_key() -> str:
     return key_match.group(1)
 
 
-# Return cloudflare tunnel fields from cloudflared.json
+# Return cloudflare tunnel fields from cloudflare-tunnel.json
 def cloudflare_tunnel(value: str) -> str:
     try:
-        with open('cloudflared.json', 'r') as file:
+        with open('cloudflare-tunnel.json', 'r') as file:
             try:
                 return json.load(file).get(value)
             except json.JSONDecodeError as e:
-                raise ValueError(f"Could not decode cloudflare.json file") from e
+                raise ValueError(f"Could not decode cloudflare-tunnel.json file") from e
     except FileNotFoundError as e:
-        raise FileNotFoundError(f"File not found: cloudflared.json") from e
+        raise FileNotFoundError(f"File not found: cloudflare-tunnel.json") from e
 
 
-# Return the GitHub deploy key from deploy.key
-def deploy_key() -> str:
+# Return the GitHub deploy key from github-deploy.key
+def github_deploy_key() -> str:
     try:
-        with open('deploy.key', 'r') as file:
-            file_content = file.read()
+        with open('github-deploy.key', 'r') as file:
+            file_content = file.read().strip()
     except FileNotFoundError as e:
-        raise FileNotFoundError(f"File not found: deploy.key") from e
+        raise FileNotFoundError(f"File not found: github-deploy.key") from e
+    return file_content
+
+
+# Return the Flux / GitHub push token from github-push-token.txt
+def github_push_token() -> str:
+    try:
+        with open('github-push-token.txt', 'r') as file:
+            file_content = file.read().strip()
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"File not found: github-push-token.txt") from e
     return file_content
 
 
@@ -88,32 +94,35 @@ def talos_patches(value: str) -> list[str]:
 def current_datetime() -> str:
     return datetime.now().strftime('%Y-%m-%dT%H:%M:%S%Z')
 
-
-def import_filter(file: Path) -> Callable[[dict[str, Any]], bool]:
-    module_path = file.relative_to(Path.cwd()).with_suffix("")
-    module_name = str(module_path).replace("/", ".")
-    spec = importlib.util.spec_from_file_location(module_name, file)
-    assert spec is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module.main
-
-
 class Plugin(makejinja.plugin.Plugin):
-    def __init__(self, data: dict[str, Any], config: makejinja.config.Config):
+    def __init__(self, data: dict[str, Any]):
         self._data = data
-        self._config = config
 
-        self._excluded_dirs: set[Path] = set()
-        for input_path in config.inputs:
-            for filter_file in input_path.rglob(".mjfilter.py"):
-                filter_func = import_filter(filter_file)
-                if filter_func(data) is False:
-                    self._excluded_dirs.add(filter_file.parent)
 
-        validation.validate(data)
+    def data(self) -> makejinja.plugin.Data:
+        data = self._data
+
+        # Set default values for optional fields
+        data.setdefault('node_default_gateway', nthhost(data.get('node_cidr'), 1))
+        data.setdefault('node_dns_servers', ['1.1.1.1', '1.0.0.1'])
+        data.setdefault('node_ntp_servers', ['162.159.200.1', '162.159.200.123'])
+        data.setdefault('cluster_pod_cidr', '10.42.0.0/16')
+        data.setdefault('cluster_svc_cidr', '10.43.0.0/16')
+        data.setdefault('repository_branch', 'main')
+        data.setdefault('repository_visibility', 'public')
+        data.setdefault('cloudflare_cluster_issuer', 'staging')
+        data.setdefault('cilium_loadbalancer_mode', 'dsr')
+
+        # If all BGP keys are set, enable BGP
+        bgp_keys = ['cilium_bgp_router_addr', 'cilium_bgp_router_asn', 'cilium_bgp_node_asn']
+        bgp_enabled = all(data.get(key) for key in bgp_keys)
+        data.setdefault('cilium_bgp_enabled', bgp_enabled)
+
+        # If there is more than one node, enable spegel
+        spegel_enabled = len(data.get('nodes')) > 1
+        data.setdefault('spegel_enabled', spegel_enabled)
+
+        return data
 
 
     def filters(self) -> makejinja.plugin.Filters:
@@ -128,19 +137,8 @@ class Plugin(makejinja.plugin.Plugin):
             age_private_key,
             age_public_key,
             cloudflare_tunnel,
-            current_datetime,
-            deploy_key,
-            talos_patches
+            github_deploy_key,
+            github_push_token,
+            talos_patches,
+            current_datetime
         ]
-
-
-    def path_filters(self):
-        return [
-            self._mjfilter_func
-        ]
-
-
-    def _mjfilter_func(self, path: Path) -> bool:
-        return not any(
-            path.is_relative_to(excluded_dir) for excluded_dir in self._excluded_dirs
-        )

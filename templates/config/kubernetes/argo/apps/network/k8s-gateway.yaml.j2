@@ -9,9 +9,9 @@ metadata:
 spec:
   project: kubernetes
   sources:
-    - repoURL: "https://github.com/#{ github.repository }#.git"
+    - repoURL: "https://github.com/#{ repository_name }#.git"
       path: kubernetes/apps/network/k8s-gateway
-      targetRevision: #{ github.branch }#
+      targetRevision: #{ repository_branch }#
       ref: repo
     - repoURL: https://ori-edge.github.io/k8s_gateway
       chart: k8s-gateway

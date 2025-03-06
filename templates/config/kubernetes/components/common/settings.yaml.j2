@@ -7,9 +7,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: "https://github.com/#{ github.repository }#.git"
+    repoURL: "https://github.com/#{ repository_name }#.git"
     path: kubernetes/argo/settings
-    targetRevision: #{ github.branch }#
+    targetRevision: #{ repository_branch }#
   destination:
     name: in-cluster
     namespace: argo-system

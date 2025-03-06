@@ -9,9 +9,9 @@ metadata:
 spec:
   project: kubernetes
   sources:
-    - repoURL: "https://github.com/#{ github.repository }#.git"
-      path: kubernetes/apps/network/ingress-nginx/certificates
-      targetRevision: #{ github.branch }#
+    - repoURL: "https://github.com/#{ repository_name }#.git"
+      path: kubernetes/apps/network/ingress-nginx/tls
+      targetRevision: #{ repository_branch }#
       ref: repo
     - repoURL: https://kubernetes.github.io/ingress-nginx
       chart: ingress-nginx

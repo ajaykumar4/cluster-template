@@ -9,9 +9,9 @@ metadata:
 spec:
   project: kubernetes
   sources:
-    - repoURL: "https://github.com/#{ github.repository }#.git"
+    - repoURL: "https://github.com/#{ repository_name }#.git"
       path: kubernetes/apps/network/echo-server
-      targetRevision: #{ github.branch }#
+      targetRevision: #{ repository_branch }#
       ref: repo
     - repoURL: ghcr.io/bjw-s/helm
       chart: app-template
