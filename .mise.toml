@@ -41,3 +41,4 @@ run = [
 "aqua:mikefarah/yq" = "4.45.1"
 "aqua:siderolabs/talos" = "1.9.4"
 "aqua:yannh/kubeconform" = "0.6.7"
+"asdf:janpieper/asdf-ksops" = "4.3.3"
