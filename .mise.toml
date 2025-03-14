@@ -11,7 +11,17 @@ TALOS_DIR = "{{config_root}}/talos"
 
 [tasks.deps]
 description = "Install Python dependencies"
-run = "uv pip install -r requirements.txt"
+run = [
+  "uv pip install -r requirements.txt",
+  "mise run helm-plugins"
+]
+
+[tasks.helm-plugins]
+description = "Install helm plugins"
+run = [
+  "helm plugin list | grep -q 'secrets' && helm plugin update secrets || helm plugin install https://github.com/jkroepke/helm-secrets",
+  "helm plugin list | grep -q 'diff' && helm plugin update diff || helm plugin install https://github.com/databus23/helm-diff"
+]
 
 [tools]
 "python" = "3.13"
@@ -33,4 +43,3 @@ run = "uv pip install -r requirements.txt"
 "aqua:siderolabs/talos" = "1.9.4"
 "aqua:yannh/kubeconform" = "0.6.7"
 "asdf:janpieper/asdf-ksops" = "4.3.3"
-"asdf:mise-plugins/mise-helm-diff" = "3.10.0"
