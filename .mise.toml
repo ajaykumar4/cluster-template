@@ -26,9 +26,9 @@ run = [
 [tools]
 "python" = "3.13"
 "uv" = "latest"
-"aqua:argoproj/argo-cd" = "2.14.5"
+"aqua:argoproj/argo-cd" = "2.14.7"
 "aqua:budimanjojo/talhelper" = "3.0.21"
-"aqua:cli/cli" = "2.68.1"
+"aqua:cli/cli" = "2.69.0"
 "aqua:cloudflare/cloudflared" = "2025.2.1"
 "aqua:cue-lang/cue" = "0.12.0"
 "aqua:FiloSottile/age" = "1.2.1"
