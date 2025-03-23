@@ -11,15 +11,7 @@ data:
 
     ingress:
       - hostname: "#{ cloudflare_domain }#"
-        service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
-        #% if cloudflare_cluster_issuer == 'staging' %#
-        originRequest:
-          noTLSVerify: true
-        #% endif %#
+        service: &svc https://ingress-nginx-external-controller.network.svc.cluster.local:443
       - hostname: "*.#{ cloudflare_domain }#"
-        service: https://ingress-nginx-external-controller.network.svc.cluster.local:443
-        #% if cloudflare_cluster_issuer == 'staging' %#
-        originRequest:
-          noTLSVerify: true
-        #% endif %#
+        service: *svc
       - service: http_status:404

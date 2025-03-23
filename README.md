@@ -1,14 +1,12 @@
 # ⛵ Cluster Template
 
-Welcome to my opinionated and extensible template for deploying a single Kubernetes cluster. The goal of this project is to make it easier for people interested in using Kubernetes to deploy a cluster at home on bare-metal or VMs. This template closely mirrors [onedr0p/cluster-template](https://github.com/onedr0p/cluster-template) repository.
-
-At a high level this project makes use of [makejinja](https://github.com/mirkolenz/makejinja) to read in configuration files ([cluster.yaml](./cluster.sample.yaml) & [nodes.yaml](./nodes.sample.yaml)). Makejinja will render out templates that will allow you to install a Kubernetes cluster with the features mentioned below.
+Welcome to my minimalist template for deploying a single Kubernetes cluster. The goal of this project is to make it easier for people interested in using Kubernetes to deploy a cluster at home on bare-metal or VMs. This template closely mirrors my personal [onedr0p/cluster-template](https://github.com/onedr0p/cluster-template) repository. At a high level this project makes use of [makejinja](https://github.com/mirkolenz/makejinja) to read in configuration files ([cluster.yaml](./cluster.sample.yaml) & [nodes.yaml](./nodes.sample.yaml)). Makejinja will render out templates that will allow you to install a Kubernetes cluster with the features mentioned below.
 
 ## ✨ Features
 
-A Kubernetes cluster deployed on-top of [Talos Linux](https://github.com/siderolabs/talos) with an opinionated implementation of [Argo](https://github.com/argoproj/argo-cd) using [GitHub](https://github.com/) as the Git provider, [sops](https://github.com/getsops/sops) to manage secrets and [cloudflared](https://github.com/cloudflare/cloudflared) to access applications external to your local network.
+A Kubernetes cluster deployed with [Talos Linux](https://github.com/siderolabs/talos) and an opinionated implementation of [Argo](https://github.com/argoproj/argo-cd) using [GitHub](https://github.com/) as the Git provider, [sops](https://github.com/getsops/sops) to manage secrets and [cloudflared](https://github.com/cloudflare/cloudflared) to access applications external to your local network.
 
-- **Required:** Some knowledge of [Containers](https://opencontainers.org/), [YAML](https://yaml.org/), [Git](https://git-scm.com/), and a **Cloudflare account** with a **domain**.
+- **Required:** Some knowledge of [Containers](https://opencontainers.org/), [YAML](https://noyaml.com/), [Git](https://git-scm.com/), and a **Cloudflare account** with a **domain**.
 - **Included components:** [argo](https://github.com/argoproj/argo-cd), [cilium](https://github.com/cilium/cilium), [cert-manager](https://github.com/cert-manager/cert-manager), [spegel](https://github.com/spegel-org/spegel), [reloader](https://github.com/stakater/Reloader), [ingress-nginx](https://github.com/kubernetes/ingress-nginx/), [external-dns](https://github.com/kubernetes-sigs/external-dns) and [cloudflared](https://github.com/cloudflare/cloudflared).
 
 **Other features include:**
@@ -17,7 +15,7 @@ A Kubernetes cluster deployed on-top of [Talos Linux](https://github.com/siderol
 - Workflow automation w/ [GitHub Actions](https://github.com/features/actions)
 - Dependency automation w/ [Renovate](https://www.mend.io/renovate)
 
-Does this sound cool to you? If so, continue to read on.
+Does this sound cool to you? If so, continue to read on! 👇
 
 ## 🚀 Let's Go!
 
@@ -61,11 +59,15 @@ There are **5 stages** outlined below for completing this project, make sure you
 
 3. Use `mise` to install the **required** CLI tools:
 
-   📍 _If `mise` is having trouble compiling Python, try running `mise settings python.compile=0` and try these commands again_
-
     ```sh
-    mise trust && mise install && mise run deps
+    mise trust
+    pip install pipx
+    mise install
     ```
+
+   📍 _**Having trouble installing the tools?** Try unsetting the `GITHUB_TOKEN` env var and then run these commands again_
+
+   📍 _**Having trouble compiling Python?** Try running `mise settings python.compile=0` and then run these commands again_
 
 ### Stage 3: Cloudflare configuration
 
@@ -149,12 +151,49 @@ There are **5 stages** outlined below for completing this project, make sure you
 
 ## 📣 Post installation
 
+### ✅ Verifications
+
+1. Check the status of Cilium:
+
+    ```sh
+    cilium status
+    ```
+
+2. Check the status of Argo and if the Argo resources are up-to-date and in a ready state:
+
+   📍 _Run `task reconcile` to force Argo to sync your Git repository state_
+
+    ```sh
+    argocd login argo.${cloudflare_domain} --username admin --password ${argo_password} --insecure
+    argocd cluster list
+    argocd repo list --output wide
+    argocd app list -A --output wide
+    ```
+
+3. Check TCP connectivity to both the ingress controllers:
+
+    ```sh
+    nmap -Pn -n -p 443 ${cluster_ingress_addr} ${cloudflare_ingress_addr} -vv
+    ```
+
+4. Check you can resolve DNS for `echo`, this should resolve to `${cluster_ingress_addr}`:
+
+    ```sh
+    dig @${cluster_dns_gateway_addr} echo.${cloudflare_domain}
+    ```
+
+5. Check the status of your wildcard `Certificate`:
+
+    ```sh
+    kubectl -n cert-manager describe certificates
+    ```
+
 ### 🌐 Public DNS
 
 > [!TIP]
 > Use the `external` ingress class to make applications public to the internet.
 
-The `external-dns` application created in the `networking` namespace will handle creating public DNS records. By default, `echo-server` and the `argo` are the only subdomains reachable from the public internet. In order to make additional applications public you must set the correct ingress class name and ingress annotations like in the Helm values for `echo-server`.
+The `external-dns` application created in the `network` namespace will handle creating public DNS records. By default, `echo` and the `argo` are the only subdomains reachable from the public internet. In order to make additional applications public you must **set the correct ingress class name and ingress annotations** like in the HelmRelease for `echo`.
 
 ### 🏠 Home DNS
 
@@ -163,30 +202,7 @@ The `external-dns` application created in the `networking` namespace will handle
 
 `k8s_gateway` will provide DNS resolution to external Kubernetes resources (i.e. points of entry to the cluster) from any device that uses your home DNS server. For this to work, your home DNS server must be configured to forward DNS queries for `${cloudflare_domain}` to `${cluster_dns_gateway_addr}` instead of the upstream DNS server(s) it normally uses. This is a form of **split DNS** (aka split-horizon DNS / conditional forwarding).
 
-... Nothing working? That is expected, this is DNS after all!
-
-### 📜 Certificates
-
-> [!WARNING]
-> By default this template will deploy a wildcard certificate using the Let's Encrypt **staging environment**, which prevents you from getting rate-limited by the Let's Encrypt production servers if your cluster doesn't deploy properly (for example due to a misconfiguration).
-
-Steps to update to the Let's Encrypt **production environment**:
-
-1. In `cluster.yaml` update `cloudflare_cluster_issuer` to `production`
-2. Run `task configure`
-3. Push your changes to git:
-
-    ```sh
-    git add -A
-    git commit -m "chore: switch to le-prod :scroll:"
-    git push
-    ```
-
-4. Wait for your certificate to be created, you can check the status by running:
-
-    ```sh
-    kubectl -n cert-manager describe certificate <name>
-    ```
+_... Nothing working? That is expected, this is DNS after all!_
 
 ### 🪝 Github Webhook
 
@@ -198,9 +214,12 @@ By default Argo will periodically check your git repository for changes. In-orde
     https://argo.${cloudflare_domain}/api/webhook
     ```
 
-2. Navigate to the settings of your repository on Github, under "Settings/Webhooks" press the "Add webhook" button. Fill in the webhook URL and your token from `github-push-token.txt`, Content type: `application/json`, Events: Choose Just the push event, and save.
+3. Navigate to the settings of your repository on Github, under "Settings/Webhooks" press the "Add webhook" button. Fill in the webhook URL and your token from `github-push-token.txt`, Content type: `application/json`, Events: Choose Just the push event, and save.
 
 ## 💥 Reset
+
+> [!WARNING]
+> **Resetting** the cluster **multiple times in a short period of time** could lead to being **rate limited by DockerHub or Let's Encrypt**.
 
 There might be a situation where you want to destroy your Kubernetes cluster. The following command will reset your nodes back to maintenance mode.
 
@@ -226,7 +245,7 @@ task talos:apply-node IP=? MODE=?
 ### ⬆️ Updating Talos and Kubernetes versions
 
 > [!TIP]
-> Ensure the `talosVersion` and `kubernetesVersion` in `talconfig.yaml` are up-to-date with the version you wish to upgrade to.
+> Ensure the `talosVersion` and `kubernetesVersion` in `talenv.yaml` are up-to-date with the version you wish to upgrade to.
 
 ```sh
 # Upgrade node to a newer Talos version
@@ -242,41 +261,44 @@ task talos:upgrade-k8s
 
 ## 🤖 Renovate
 
-[Renovate](https://www.mend.io/renovate) is a tool that automates dependency management. It is designed to scan your repository around the clock and open PRs for out-of-date dependencies it finds. Common dependencies it can discover are Helm charts, container images, GitHub Actions, Ansible roles... even Argo itself! Merging a PR will cause Argo to apply the update to your cluster.
+[Renovate](https://www.mend.io/renovate) is a tool that automates dependency management. It is designed to scan your repository around the clock and open PRs for out-of-date dependencies it finds. Common dependencies it can discover are Helm charts, container images, GitHub Actions and more! In most cases merging a PR will cause Argo to apply the update to your cluster.
 
 To enable Renovate, click the 'Configure' button over at their [Github app page](https://github.com/apps/renovate) and select your repository. Renovate creates a "Dependency Dashboard" as an issue in your repository, giving an overview of the status of all updates. The dashboard has interactive checkboxes that let you do things like advance scheduling or reattempt update PRs you closed without merging.
 
-The base Renovate configuration in your repository can be viewed at [.github/renovate.json5](./.github/renovate.json5). By default it is scheduled to be active with PRs every weekend, but you can [change the schedule to anything you want](https://docs.renovatebot.com/presets-schedule), or remove it if you want Renovate to open PRs right away.
+The base Renovate configuration in your repository can be viewed at [.renovaterc.json5](.renovaterc.json5). By default it is scheduled to be active with PRs every weekend, but you can [change the schedule to anything you want](https://docs.renovatebot.com/presets-schedule), or remove it if you want Renovate to open PRs immediately.
 
 ## 🐛 Debugging
 
-Below is a general guide on trying to debug an issue with an resource or application. For example, if a workload/resource is not showing up or a pod has started but in a `CrashLoopBackOff` or `Pending` state. Most of these steps do not include a way to fix the problem as the problem could be one of many different things.
+Below is a general guide on trying to debug an issue with an resource or application. For example, if a workload/resource is not showing up or a pod has started but in a `CrashLoopBackOff` or `Pending` state. These steps do not include a way to fix the problem as the problem could be one of many different things.
 
-1. Verify all Argo Applications are up-to-date and in a ready state.
+1. Check if the Argo resources are up-to-date and in a ready state:
+
+   📍 _Run `task reconcile` to force Argo to sync your Git repository state_
 
     ```sh
-    kubectl get applications -n argo-system
+    argocd repo list --output wide
+    argocd app list -A --output wide
     ```
 
-2. Do you see the pod of the workload you are debugging?
+2. Do you see the pod of the workload you are debugging:
 
     ```sh
     kubectl -n <namespace> get pods -o wide
     ```
 
-3. Check the logs of the pod if its there.
+3. Check the logs of the pod if its there:
 
     ```sh
     kubectl -n <namespace> logs <pod-name> -f
     ```
 
-4. If a resource exists try to describe it to see what problems it might have.
+4. If a resource exists try to describe it to see what problems it might have:
 
     ```sh
     kubectl -n <namespace> describe <resource> <name>
     ```
 
-5. Check the namespace events
+5. Check the namespace events:
 
     ```sh
     kubectl -n <namespace> get events --sort-by='.metadata.creationTimestamp'

@@ -7,4 +7,4 @@ spec:
   endpoints:
     - dnsName: "external.#{ cloudflare_domain }#"
       recordType: CNAME
-      targets: ["#{ cloudflare_tunnel('TunnelID') }#.cfargotunnel.com"]
+      targets: ["#{ cloudflare_tunnel_id() }#.cfargotunnel.com"]

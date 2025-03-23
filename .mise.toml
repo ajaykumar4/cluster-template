@@ -25,9 +25,10 @@ run = [
 
 [tools]
 "python" = "3.13"
-"uv" = "latest"
+"pipx:makejinja" = "2.7.2"
 "aqua:argoproj/argo-cd" = "2.14.7"
 "aqua:budimanjojo/talhelper" = "3.0.21"
+"aqua:cilium/cilium-cli" = "0.18.2"
 "aqua:cli/cli" = "2.69.0"
 "aqua:cloudflare/cloudflared" = "2025.2.1"
 "aqua:cue-lang/cue" = "0.12.0"

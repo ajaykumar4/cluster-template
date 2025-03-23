@@ -26,3 +26,10 @@ includes:
 tasks:
 
   default: task --list
+
+  reconcile:
+    desc: Force Argo to pull in changes from your Git repository
+    cmd: argocd app list --project home-lab -o name | xargs -I {} argocd app wait {} --sync --timeout 300
+    preconditions:
+      - test -f {{.KUBECONFIG}}
+      - which argocd

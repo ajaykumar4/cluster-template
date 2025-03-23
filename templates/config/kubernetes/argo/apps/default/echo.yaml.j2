@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: echo-server
+  name: echo
   namespace: argo-system
   annotations:
     argocd.argoproj.io/sync-wave: '0'
@@ -10,16 +10,16 @@ spec:
   project: kubernetes
   sources:
     - repoURL: "https://github.com/#{ repository_name }#.git"
-      path: kubernetes/apps/network/echo-server
+      path: kubernetes/apps/network/echo
       targetRevision: #{ repository_branch }#
       ref: repo
     - repoURL: ghcr.io/bjw-s/helm
       chart: app-template
       targetRevision: 3.7.3
       helm:
-        releaseName: echo-server
+        releaseName: echo
         valueFiles:
-          - $repo/kubernetes/apps/network/echo-server/values.sops.yaml
+          - $repo/kubernetes/apps/network/echo/values.sops.yaml
   destination:
     name: in-cluster
     namespace: network
