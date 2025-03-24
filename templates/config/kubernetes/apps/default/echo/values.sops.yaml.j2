@@ -1,5 +1,5 @@
 controllers:
-  echo-server:
+  echo:
     strategy: RollingUpdate
     containers:
       app:
@@ -41,13 +41,13 @@ defaultPodOptions:
     seccompProfile: { type: RuntimeDefault }
 service:
   app:
-    controller: echo-server
+    controller: echo
     ports:
       http:
         port: *port
 serviceMonitor:
   app:
-    serviceName: echo-server
+    serviceName: echo
     endpoints:
       - port: http
         scheme: http
