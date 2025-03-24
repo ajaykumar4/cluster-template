@@ -165,7 +165,7 @@ function main() {
     apply_helm_releases
     apply_argo_bootstrapping
 
-    log info "Congrats! The cluster is bootstrapped and Flux is syncing the Git repository"
+    log info "Congrats! The cluster is bootstrapped and Argo is syncing the Git repository"
 }
 
 main "$@"
