@@ -10,7 +10,7 @@ spec:
   project: kubernetes
   sources:
     - repoURL: "https://github.com/#{ repository_name }#.git"
-      path: kubernetes/apps/network/echo
+      path: kubernetes/apps/default/echo
       targetRevision: #{ repository_branch }#
       ref: repo
     - repoURL: ghcr.io/bjw-s/helm
@@ -19,10 +19,10 @@ spec:
       helm:
         releaseName: echo
         valueFiles:
-          - $repo/kubernetes/apps/network/echo/values.sops.yaml
+          - $repo/kubernetes/apps/default/echo/values.sops.yaml
   destination:
     name: in-cluster
-    namespace: network
+    namespace: default
   syncPolicy:
     automated:
       allowEmpty: true
