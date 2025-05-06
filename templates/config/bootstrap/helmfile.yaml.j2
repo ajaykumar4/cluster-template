@@ -40,7 +40,7 @@ releases:
     namespace: kube-system
     atomic: true
     chart: coredns/coredns
-    version: 1.39.2
+    version: 1.42.1
     values: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/kube-system/coredns/values.yaml']
     needs: ['kube-system/cilium']
 
