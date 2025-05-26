@@ -69,6 +69,6 @@ releases:
   - name: argo-cd
     namespace: argo-system
     chart: argo-helm/argo-cd
-    version: 7.8.14
+    version: 7.9.1
     secrets: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/argo-system/argo-cd/values.sops.yaml']
     needs: ['cert-manager/cert-manager']
