@@ -1,6 +1,6 @@
 ---
 controllers:
-  cloudflared:
+  cloudflare-tunnel:
     strategy: RollingUpdate
     annotations:
       reloader.stakater.com/auto: "true"
@@ -49,13 +49,13 @@ defaultPodOptions:
     seccompProfile: { type: RuntimeDefault }
 service:
   app:
-    controller: cloudflared
+    controller: cloudflare-tunnel
     ports:
       http:
         port: *port
 serviceMonitor:
   app:
-    serviceName: cloudflared
+    serviceName: cloudflare-tunnel
     endpoints:
       - port: http
         scheme: http
@@ -65,7 +65,7 @@ serviceMonitor:
 persistence:
   config:
     type: configMap
-    name: cloudflared-configmap
+    name: cloudflare-tunnel-configmap
     globalMounts:
       - path: /etc/cloudflared/config.yaml
         subPath: config.yaml
