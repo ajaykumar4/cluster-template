@@ -5,28 +5,10 @@ helmDefaults:
   cleanupOnFail: true
   wait: true
   waitForJobs: true
-  # waitRetries: 3 # Not supported by Helm yet
 
 repositories:
-  - name: argo-helm
-    url: ghcr.io/argoproj/argo-helm
-    oci: true
-
-  - name: coredns
-    url: ghcr.io/coredns/charts
-    oci: true
-
   - name: cilium
     url: https://helm.cilium.io
-
-  - name: jetstack
-    url: https://charts.jetstack.io
-
-  #% if spegel_enabled %#
-  - name: spegel
-    url: ghcr.io/spegel-org/helm-charts
-    oci: true
-  #% endif %#
 
 releases:
   - name: cilium
@@ -34,32 +16,32 @@ releases:
     atomic: true
     chart: cilium/cilium
     version: 1.17.4
-    values: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/kube-system/cilium/values.yaml']
+    values: ['../kubernetes/apps/kube-system/cilium/values.yaml']
 
   - name: coredns
     namespace: kube-system
     atomic: true
-    chart: coredns/coredns
+    chart: oci://ghcr.io/coredns/charts/coredns
     version: 1.42.2
-    values: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/kube-system/coredns/values.yaml']
+    values: ['../kubernetes/apps/kube-system/coredns/values.yaml']
     needs: ['kube-system/cilium']
 
   #% if spegel_enabled %#
   - name: spegel
     namespace: kube-system
     atomic: true
-    chart: spegel/spegel
+    chart: oci://ghcr.io/spegel-org/helm-charts/spegel
     version: 0.2.0
-    values: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/kube-system/spegel/values.yaml']
+    values: ['../kubernetes/apps/kube-system/spegel/values.yaml']
     needs: ['kube-system/coredns']
   #% endif %#
 
   - name: cert-manager
     namespace: cert-manager
     atomic: true
-    chart: jetstack/cert-manager
+    chart: oci://quay.io/jetstack/charts/cert-manager
     version: v1.17.2
-    values: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/cert-manager/cert-manager/values.yaml']
+    values: ['../kubernetes/apps/cert-manager/cert-manager/values.yaml']
     #% if spegel_enabled %#
     needs: ['kube-system/spegel']
     #% else %#
@@ -68,7 +50,7 @@ releases:
 
   - name: argo-cd
     namespace: argo-system
-    chart: argo-helm/argo-cd
+    chart: oci://ghcr.io/argoproj/argo-helm/argo-cd
     version: 8.0.10
-    secrets: ['{{ requiredEnv "ROOT_DIR" }}/kubernetes/apps/argo-system/argo-cd/values.sops.yaml']
+    secrets: ['../kubernetes/apps/argo-system/argo-cd/values.sops.yaml']
     needs: ['cert-manager/cert-manager']

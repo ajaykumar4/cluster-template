@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cloudflared
+  name: cloudflare-tunnel
   namespace: argo-system
   annotations:
     argocd.argoproj.io/sync-wave: '0'
@@ -17,9 +17,9 @@ spec:
       chart: app-template
       targetRevision: 3.7.3
       helm:
-        releaseName: cloudflared
+        releaseName: cloudflare-tunnel
         valueFiles:
-          - $repo/kubernetes/apps/network/cloudflared/values.yaml
+          - $repo/kubernetes/apps/network/cloudflare-tunnel/values.yaml
   destination:
     name: in-cluster
     namespace: network

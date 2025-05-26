@@ -46,12 +46,17 @@ redis:
 server:
   replicas: 2
   allowAnyNamespace: true
-  ingress:
-    enabled: true
-    ingressClassName: external
-    annotations:
-      external-dns.alpha.kubernetes.io/target: "external.#{ cloudflare_domain }#"
-    hostname: "argo.#{ cloudflare_domain }#"
+  route:
+    app:
+      hostnames: ["argo.#{ cloudflare_domain }#"]
+      parentRefs:
+        - name: external
+          namespace: kube-system
+          sectionName: https
+      rules:
+        - backendRefs:
+            - identifier: app
+              port: http
   metrics:
     enabled: true
     serviceMonitor: *service-monitor
