@@ -102,7 +102,7 @@ def github_deploy_key(file_path: str = 'github-deploy.key') -> str:
         raise RuntimeError(f"Unexpected error while reading {file_path}: {e}")
 
 
-# Return the Flux / GitHub push token from github-push-token.txt
+# Return the Argo / GitHub push token from github-push-token.txt
 def github_push_token(file_path: str = 'github-push-token.txt') -> str:
     try:
         with open(file_path, 'r') as file:

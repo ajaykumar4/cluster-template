@@ -14,10 +14,10 @@ run = [
 [tools]
 "python" = "3.13"
 "pipx:makejinja" = "2.7.2"
-"aqua:argoproj/argo-cd" = "3.0.3"
+"aqua:argoproj/argo-cd" = "3.0.5"
 "aqua:budimanjojo/talhelper" = "3.0.27"
 "aqua:cilium/cilium-cli" = "0.18.3"
-"aqua:cli/cli" = "2.73.0"
+"aqua:cli/cli" = "2.74.0"
 "aqua:cloudflare/cloudflared" = "2025.5.0"
 "aqua:cue-lang/cue" = "0.13.0"
 "aqua:FiloSottile/age" = "1.2.1"
