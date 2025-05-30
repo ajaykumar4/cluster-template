@@ -13,9 +13,9 @@ spec:
       path: kubernetes/apps/default/echo
       targetRevision: #{ repository_branch }#
       ref: repo
-    - repoURL: ghcr.io/bjw-s/helm
+    - repoURL: ghcr.io/bjw-s-labs/helm
       chart: app-template
-      targetRevision: 3.7.3
+      targetRevision: 4.0.1
       helm:
         releaseName: echo
         valueFiles:

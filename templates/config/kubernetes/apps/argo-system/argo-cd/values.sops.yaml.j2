@@ -1,10 +1,12 @@
+fullnameOverride: "argocd"
 crds:
   install: true
-global:
-  domain: "argo.#{ cloudflare_domain }#"
+  # -- Keep CRDs on chart uninstall
+  keep: false
 configs:
   params:
     server.insecure: true
+    controller.diff.server.side: true
   cm:
     statusbadge.enabled: true
     kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
@@ -46,12 +48,6 @@ redis:
 server:
   replicas: 2
   allowAnyNamespace: true
-  ingress:
-    enabled: true
-    ingressClassName: external
-    annotations:
-      external-dns.alpha.kubernetes.io/target: "external.#{ cloudflare_domain }#"
-    hostname: "argo.#{ cloudflare_domain }#"
   metrics:
     enabled: true
     serviceMonitor: *service-monitor
