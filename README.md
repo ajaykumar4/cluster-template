@@ -63,9 +63,11 @@ There are **5 stages** outlined below for completing this project, make sure you
     gh repo create $REPONAME --template ajaykumar4/cluster-template --disable-wiki --public --clone && cd $REPONAME
     ```
 
-2. **Install** and **activate** [mise](https://mise.jdx.dev/) following the instructions for your workstation [here](https://mise.jdx.dev/getting-started.html).
+2. **Install** the [Mise CLI](https://mise.jdx.dev/getting-started.html#installing-mise-cli) on your workstation.
 
-3. Use `mise` to install the **required** CLI tools:
+3. **Activate** Mise in your shell by following the [activation guide](https://mise.jdx.dev/getting-started.html#activate-mise).
+
+4. Use `mise` to install the **required** CLI tools:
 
     ```sh
     mise trust
@@ -77,6 +79,13 @@ There are **5 stages** outlined below for completing this project, make sure you
    📍 _**Having trouble installing the tools?** Try unsetting the `GITHUB_TOKEN` env var and then run these commands again_
 
    📍 _**Having trouble compiling Python?** Try running `mise settings python.compile=0` and then run these commands again_
+
+5. Logout of GitHub Container Registry (GHCR) as this may cause authorization problems when using the public registry:
+
+    ```sh
+    docker logout ghcr.io
+    helm registry logout ghcr.io
+    ```
 
 ### Stage 3: Cloudflare configuration
 
@@ -181,11 +190,15 @@ There are **5 stages** outlined below for completing this project, make sure you
 
 3. Check TCP connectivity to both the internal and external gateways:
 
+   📍 _`${cluster_gateway_addr}` and `${cloudflare_gateway_addr}` are only placeholders, replace them with your actual values_
+
     ```sh
     nmap -Pn -n -p 443 ${cluster_gateway_addr} ${cloudflare_gateway_addr} -vv
     ```
 
 4. Check you can resolve DNS for `echo`, this should resolve to `${cluster_gateway_addr}`:
+
+   📍 _`${cluster_dns_gateway_addr}` and `${cloudflare_domain}` are only placeholders, replace them with your actual values_
 
     ```sh
     dig @${cluster_dns_gateway_addr} echo.${cloudflare_domain}
@@ -332,18 +345,15 @@ Once your cluster is fully configured and you no longer need to run `task config
     git push
     ```
 
-## 👉 Community Support
-
-- Make a post in this repository's Github [Discussions](https://github.com/ajaykumar4/cluster-template/discussions).
-- Start a thread in the `#support` or `#cluster-template` channels in the [Home Operations](https://discord.gg/home-operations) Discord server.
-
 ## ❔ What's next
 
-The cluster is your oyster (or something like that). Below are some optional considerations you might want to review.
+There's a lot to absorb here, especially if you're new to these tools. Take some time to familiarize yourself with the tooling and understand how all the components interconnect. Dive into the documentation of the various tools included — they are a valuable resource. This shouldn't be a production environment yet, so embrace the freedom to experiment. Move fast, break things intentionally, and challenge yourself to fix them.
+
+Below are some optional considerations you may want to explore.
 
 ### DNS
 
-If you're currently using [k8s_gateway](https://github.com/ori-edge/k8s_gateway) to provide DNS for your applications, consider exploring [external-dns](https://github.com/kubernetes-sigs/external-dns).
+The template uses [k8s_gateway](https://github.com/ori-edge/k8s_gateway) to provide DNS for your applications, consider exploring [external-dns](https://github.com/kubernetes-sigs/external-dns) as an alternative.
 
 External-DNS offers broad support for various DNS providers, including but not limited to:
 
@@ -377,6 +387,13 @@ These tools offer a variety of solutions to meet your persistent storage needs, 
 ### Community Repositories
 
 Community member [@whazor](https://github.com/whazor) created [Kubesearch](https://kubesearch.dev) to allow searching Argo Helm Releases across Github and Gitlab repositories with the `kubesearch` topic.
+
+## 🙋 Support
+
+### Community
+
+- Make a post in this repository's Github [Discussions](https://github.com/ajaykumar4/cluster-template/discussions).
+- Start a thread in the `#support` or `#cluster-template` channels in the [Home Operations](https://discord.gg/home-operations) Discord server.
 
 ## 🙌 Related Projects
 
