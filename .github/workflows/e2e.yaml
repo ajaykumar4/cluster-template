@@ -18,6 +18,8 @@ jobs:
     if: ${{ github.repository == 'ajaykumar4/cluster-template' }}
     name: configure
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
