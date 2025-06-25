@@ -1,0 +1,128 @@
+fullnameOverride: "argocd"
+crds:
+  install: true
+  # -- Keep CRDs on chart uninstall
+  keep: false
+configs:
+  params:
+    server.insecure: true
+    controller.diff.server.side: true
+  cm:
+    statusbadge.enabled: true
+    kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
+    helm.valuesFileSchemes: >-
+      secrets+gpg-import, secrets+gpg-import-kubernetes,
+      secrets+age-import, secrets+age-import-kubernetes,
+      secrets, secrets+literal,
+      https
+    resource.exclusions: |
+      - apiGroups:
+          - cilium.io
+        kinds:
+          - CiliumIdentity
+        clusters:
+          - "*"
+controller:
+  replicas: 2
+  metrics:
+    enabled: true
+    applicationLabels:
+      enabled: true
+    serviceMonitor: &service-monitor
+      enabled: true
+      additionalLabels:
+        release: kube-prometheus-stack
+dex:
+  replicas: 2
+  metrics:
+    enabled: true
+    serviceMonitor: *service-monitor
+redis:
+  metrics:
+    enabled: true
+    serviceMonitor: *service-monitor
+server:
+  replicas: 2
+  allowAnyNamespace: true
+  metrics:
+    enabled: true
+    serviceMonitor: *service-monitor
+notifications:
+  replicas: 2
+  metrics:
+    enabled: true
+    serviceMonitor: *service-monitor
+repoServer:
+  replicas: 2
+  serviceAccount:
+    create: true
+    name: argocd-repo-server
+  rbac:
+    - apiGroups:
+        - ""
+      resources:
+        - secrets
+      verbs:
+        - get
+  env:
+    - name: HELM_PLUGINS
+      value: /custom-tools/helm-plugins/
+    - name: HELM_SECRETS_CURL_PATH
+      value: /custom-tools/curl
+    - name: HELM_SECRETS_SOPS_PATH
+      value: /custom-tools/sops
+    - name: HELM_SECRETS_VALS_PATH
+      value: /custom-tools/vals
+    - name: HELM_SECRETS_KUBECTL_PATH
+      value: /custom-tools/kubectl
+    - name: HELM_SECRETS_BACKEND
+      value: sops
+    # https://github.com/jkroepke/helm-secrets/wiki/Security-in-shared-environments
+    - name: HELM_SECRETS_VALUES_ALLOW_SYMLINKS
+      value: "false"
+    - name: HELM_SECRETS_VALUES_ALLOW_ABSOLUTE_PATH
+      value: "true"
+    - name: HELM_SECRETS_VALUES_ALLOW_PATH_TRAVERSAL
+      value: "false"
+    - name: HELM_SECRETS_WRAPPER_ENABLED
+      value: "true"
+    - name: HELM_SECRETS_DECRYPT_SECRETS_IN_TMP_DIR
+      value: "true"
+    - name: HELM_SECRETS_HELM_PATH
+      value: /usr/local/bin/helm
+    - name: SOPS_AGE_KEY_FILE # For age
+      value: /helm-secrets-private-keys/key.txt
+  volumes:
+    - name: custom-tools
+      emptyDir: {}
+    # kubectl create secret generic helm-secrets-private-keys --from-file=key.asc=assets/gpg/private2.gpg
+    - name: helm-secrets-private-keys
+      secret:
+        secretName: helm-secrets-private-keys
+  volumeMounts:
+    - mountPath: /custom-tools
+      name: custom-tools
+    - mountPath: /usr/local/sbin/helm
+      subPath: helm
+      name: custom-tools
+    - mountPath: /usr/local/bin/kustomize
+      name: custom-tools
+      subPath: kustomize
+    - mountPath: /usr/local/bin/ksops
+      name: custom-tools
+      subPath: ksops
+    - mountPath: /helm-secrets-private-keys/
+      name: helm-secrets-private-keys
+  initContainers:
+    - name: gitops-tools
+      image: ajaykumar4/gitops-tools:2025.6.0
+      imagePullPolicy: Always
+      command: [sh, -ec]
+      args:
+        - |
+          mkdir -p /custom-tools/
+          cp -rf /gitops-tools/* /custom-tools
+          chmod +x /custom-tools/*
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools

@@ -21,6 +21,7 @@ spec:
       helm:
         releaseName: argo-cd
         valueFiles:
+          - $repo/kubernetes/apps/argo-system/argo-cd/values.yaml
           - $repo/kubernetes/apps/argo-system/argo-cd/values.sops.yaml
   destination:
     name: in-cluster
