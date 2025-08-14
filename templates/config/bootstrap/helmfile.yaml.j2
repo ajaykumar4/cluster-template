@@ -53,7 +53,7 @@ releases:
   - name: argo-cd
     namespace: argo-system
     chart: oci://ghcr.io/argoproj/argo-helm/argo-cd
-    version: 8.2.5
+    version: 8.3.0
     values: ['../kubernetes/apps/argo-system/argo-cd/values.yaml']
     secrets: ['../kubernetes/apps/argo-system/argo-cd/values.sops.yaml']
     needs: ['cert-manager/cert-manager']
