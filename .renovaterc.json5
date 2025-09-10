@@ -16,11 +16,11 @@
   argocd: {
     managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
   },
-  "helm-values": {
-    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
-  },
   helmfile: {
-    managerFilePatterns: ["/(^|/)helmfile\\.ya?ml(?:\\.j2)?$/"],
+    managerFilePatterns: [
+      "/(^|/)helmfile\\.ya?ml(?:\\.gotmpl)?(?:\\.j2)?$/",
+      "/(^|/)helmfile\\.d/.+\\.ya?ml(?:\\.gotmpl)?(?:\\.j2)?$/",
+    ],
   },
   kubernetes: {
     managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
@@ -30,40 +30,20 @@
   },
   packageRules: [
     {
+      description: "Override Helmfile Dependency Name",
+      matchDatasources: ["docker"],
+      matchManagers: ["helmfile"],
+      overrideDepName: "{{packageName}}",
+    },
+    {
       description: "Argo Operator Group",
-      groupName: "Argo Operator",
-      matchPackageNames: ["/argo-cd/"],
+      groupName: "argocd",
       matchDatasources: ["docker"],
+      matchPackageNames: ["/argocd/"],
       group: {
         commitMessageTopic: "{{{groupName}}} group",
       },
-    },
-    {
-      description: "Cert-Manager Group",
-      groupName: "Cert-Manager",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["/cert-manager/"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-    },
-    {
-      description: "CoreDNS Group",
-      groupName: "CoreDNS",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["/coredns/"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
-    },
-    {
-      description: "Spegel Group",
-      groupName: "Spegel",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["/spegel/"],
-      group: {
-        commitMessageTopic: "{{{groupName}}} group",
-      },
+      minimumGroupSize: 2,
     },
     {
       description: "Auto-merge GitHub Actions",
@@ -77,7 +57,6 @@
     {
       description: "Auto-merge Mise Tools",
       matchManagers: ["mise"],
-      matchDatasources: ["github-releases"],
       automerge: true,
       automergeType: "branch",
       matchUpdateTypes: ["minor", "patch"],
@@ -87,22 +66,22 @@
       matchUpdateTypes: ["major"],
       semanticCommitType: "feat",
       commitMessagePrefix: "{{semanticCommitType}}({{semanticCommitScope}})!:",
-      commitMessageExtra: "( {{currentVersion}} → {{newVersion}} )",
+      commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
     },
     {
       matchUpdateTypes: ["minor"],
       semanticCommitType: "feat",
-      commitMessageExtra: "( {{currentVersion}} → {{newVersion}} )",
+      commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
     },
     {
       matchUpdateTypes: ["patch"],
       semanticCommitType: "fix",
-      commitMessageExtra: "( {{currentVersion}} → {{newVersion}} )",
+      commitMessageExtra: "( {{currentVersion}} ➔ {{newVersion}} )",
     },
     {
       matchUpdateTypes: ["digest"],
       semanticCommitType: "chore",
-      commitMessageExtra: "( {{currentDigestShort}} → {{newDigestShort}} )",
+      commitMessageExtra: "( {{currentDigestShort}} ➔ {{newDigestShort}} )",
     },
     {
       matchDatasources: ["docker"],
