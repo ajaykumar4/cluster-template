@@ -1,0 +1,1 @@
+{{ (fromYaml (readFile (printf "../../../kubernetes/apps/%s/%s/values.sops.yaml" .Release.Namespace .Release.Name))) | toYaml }}

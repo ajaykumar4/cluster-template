@@ -1,0 +1,40 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: envoy-gateway
+  namespace: argo-system
+  annotations:
+    argocd.argoproj.io/sync-wave: '0'
+spec:
+  project: kubernetes
+  sources:
+    - repoURL: "https://github.com/#{ repository_name }#.git"
+      path: kubernetes/apps/network/envoy-gateway
+      targetRevision: #{ repository_branch }#
+      ref: repo
+    - repoURL: mirror.gcr.io/envoyproxy
+      chart: gateway-helm
+      targetRevision: 1.5.3
+      helm:
+        releaseName: envoy-gateway
+  destination:
+    name: in-cluster
+    namespace: network
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 1
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
