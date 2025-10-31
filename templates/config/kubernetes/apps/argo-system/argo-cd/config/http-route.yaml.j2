@@ -4,7 +4,7 @@ metadata:
   name: argo
 spec:
   parentRefs:
-    - name: external
+    - name: envoy-external
       namespace: kube-system
   hostnames: ["argo.#{ cloudflare_domain }#"]
   rules:
