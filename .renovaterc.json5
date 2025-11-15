@@ -22,6 +22,9 @@
       "/(^|/)helmfile\\.d/.+\\.ya?ml?(?:\\.j2)?$/",
     ],
   },
+  "helm-values": {
+    "managerFilePatterns": ["/(^|/)kubernetes/.+\\/values\\.ya?ml(?:\\.j2)?$/"]
+  },
   kubernetes: {
     managerFilePatterns: ["(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$"],
   },
