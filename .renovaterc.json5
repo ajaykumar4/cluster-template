@@ -10,23 +10,20 @@
     ":semanticCommits",
   ],
   dependencyDashboard: true,
-  dependencyDashboardTitle: "Renovate Dashboard 🤖",
+  dependencyDashboardTitle: "Renovate Dashboard :robot:",
   schedule: ["every weekend"],
   ignorePaths: ["**/*.sops.*"],
   argocd: {
-    managerFilePatterns: ["(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$"],
+    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
   },
   helmfile: {
     managerFilePatterns: [
-      "/(^|/)helmfile\\.ya?ml?(?:\\.j2)?$/",
-      "/(^|/)helmfile\\.d/.+\\.ya?ml?(?:\\.j2)?$/",
+      "/(^|/)helmfile\\.ya?ml(?:\\.gotmpl)?(?:\\.j2)?$/",
+      "/(^|/)helmfile\\.d/.+\\.ya?ml(?:\\.gotmpl)?(?:\\.j2)?$/",
     ],
   },
-  "helm-values": {
-    "managerFilePatterns": ["/(^|/)kubernetes/.+\\/values\\.ya?ml(?:\\.j2)?$/"]
-  },
   kubernetes: {
-    managerFilePatterns: ["(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$"],
+    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
   },
   kustomize: {
     managerFilePatterns: ["/^kustomization\\.ya?ml(?:\\.j2)?$/"],
@@ -125,6 +122,10 @@
       labels: ["type/patch"],
     },
     {
+      matchUpdateTypes: ["digest"],
+      labels: ["type/digest"],
+    },
+    {
       matchDatasources: ["docker"],
       addLabels: ["renovate/container"],
     },
@@ -163,6 +164,17 @@
         "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n.+/(?<currentValue>(v|\\d)[^/]+)",
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
+    },
+    {
+      customType: "regex",
+      description: "Process OCI dependencies",
+      managerFilePatterns: [
+        "/\\.yaml(?:\\.j2)?$/",
+      ],
+      matchStrings: [
+        "oci://(?<depName>[^:]+):(?<currentValue>\\S+)",
+      ],
+      datasourceTemplate: "docker",
     },
   ],
 }

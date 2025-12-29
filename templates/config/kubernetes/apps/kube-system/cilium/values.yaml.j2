@@ -22,12 +22,9 @@ dashboards:
 endpointRoutes:
   enabled: true
 envoy:
-  rollOutPods: true
-  prometheus:
-     serviceMonitor:
-       enabled: true
+  enabled: false
 gatewayAPI:
-  enabled: true
+  enabled: false
 hubble:
   enabled: false
 ipam:
@@ -80,4 +77,5 @@ securityContext:
       - SYS_ADMIN
       - SYS_RESOURCE
 socketLB:
+  enabled: true
   hostNamespaceOnly: true
