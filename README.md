@@ -27,9 +27,17 @@ Does this sound cool to you? If so, continue to read on! 👇
 
 ## 🚀 Let's Go!
 
-There are **5 stages** outlined below for completing this project, make sure you follow the stages in order.
+There are **6 stages** outlined below for completing this project, make sure you follow the stages in order.
 
-### Stage 1: Machine Preparation
+### Stage 1: Hardware Configuration
+
+For a **stable** and **high availability** production Kubernetes cluster, hardware selection is critical, and **Bare Metal is strongly recommended** over virtualized platforms like Proxmox.
+
+Using **enterprise NVMe or SATA SSDs on Bare Metal** (even used drives) provides the most reliable performance and rock-solid stability. Consumer drives, on the other hand, carry risks such as latency spikes, corruption, and fsync delays, particularly in multi-node setups. **Proxmox with enterprise drives can work** for testing or carefully tuned production clusters, but it introduces additional layers of potential I/O contention, moreso if you use consumer drives instead. **HDDs and shared storage** (Ceph, NFS, iSCSI, SAN) are generally unsuitable for control plane workloads due to instability and quorum failures. Any **replicated storage** (e.g., Rook-Ceph, Longhorn) should always use **dedicated disks separate from control plane and etcd nodes** to ensure reliability. Worker nodes are more flexible, but risky configurations should still be avoided for stateful workloads to maintain cluster stability.
+
+These guidelines provide a strong baseline, but there are always exceptions and nuances. The best way to ensure your hardware configuration works is to **test it thoroughly and benchmark performance** under realistic workloads.
+
+### Stage 2: Machine Preparation
 
 > [!IMPORTANT]
 > If you have **3 or more nodes** it is recommended to make 3 of them controller nodes for a highly available control plane. This project configures **all nodes** to be able to run workloads. **Worker nodes** are therefore **optional**.
@@ -39,7 +47,7 @@ There are **5 stages** outlined below for completing this project, make sure you
 > |---------|----------|---------------|---------------------------|
 > | Control/Worker | 4 | 16GB | 256GB SSD/NVMe |
 
-1. Head over to the [Talos Linux Image Factory](https://factory.talos.dev) and follow the instructions. Be sure to only choose the **bare-minimum system extensions** as some might require additional configuration and prevent Talos from booting without it. You can always add system extensions after Talos is installed and working.
+1. Head over to the [Talos Linux Image Factory](https://factory.talos.dev) and follow the instructions. Be sure to only choose the **bare-minimum system extensions** as some might require additional configuration and prevent Talos from booting without it. Depending on your CPU start with the Intel/AMD system extensions (`i915`, `intel-ucode` & `mei` **or** `amdgpu` & `amd-ucode`), you can always add system extensions after Talos is installed and working.
 
 2. This will eventually lead you to download a Talos Linux ISO (or for SBCs a RAW) image. Make sure to note the **schematic ID** you will need this later on.
 
@@ -51,7 +59,7 @@ There are **5 stages** outlined below for completing this project, make sure you
     nmap -Pn -n -p 50000 192.168.1.0/24 -vv | grep 'Discovered'
     ```
 
-### Stage 2: Local Workstation
+### Stage 3: Local Workstation
 
 > [!TIP]
 > It is recommended to set the visibility of your repository to `Public` so you can easily request help if you get stuck.
@@ -87,7 +95,7 @@ There are **5 stages** outlined below for completing this project, make sure you
     helm registry logout ghcr.io
     ```
 
-### Stage 3: Cloudflare configuration
+### Stage 4: Cloudflare configuration
 
 > [!WARNING]
 > If any of the commands fail with `command not found` or `unknown command` it means `mise` is either not install or configured incorrectly.
@@ -107,7 +115,7 @@ There are **5 stages** outlined below for completing this project, make sure you
     cloudflared tunnel create --credentials-file cloudflare-tunnel.json kubernetes
     ```
 
-### Stage 4: Cluster configuration
+### Stage 5: Cluster configuration
 
 1. Generate the config files from the sample files:
 
@@ -136,7 +144,7 @@ There are **5 stages** outlined below for completing this project, make sure you
 > [!TIP]
 > Using a **private repository**? Make sure to paste the public key from `github-deploy.key.pub` into the deploy keys section of your GitHub repository settings. This will make sure Argo has read/write access to your repository.
 
-### Stage 5: Bootstrap Talos, Kubernetes, and Argo
+### Stage 6: Bootstrap Talos, Kubernetes, and Argo
 
 > [!WARNING]
 > It might take a while for the cluster to be setup (10+ minutes is normal). During which time you will see a variety of error messages like: "couldn't get current server API group list," "error: no matching resources found", etc. 'Ready' will remain "False" as no CNI is deployed yet. **This is a normal.** If this step gets interrupted, e.g. by pressing <kbd>Ctrl</kbd> + <kbd>C</kbd>, you likely will need to [reset the cluster](#-reset) before trying again
@@ -207,7 +215,7 @@ There are **5 stages** outlined below for completing this project, make sure you
 5. Check the status of your wildcard `Certificate`:
 
     ```sh
-    kubectl -n cert-manager describe certificates
+    kubectl -n network describe certificates
     ```
 ### 🌐 Public DNS
 
@@ -279,6 +287,36 @@ task talos:upgrade-node IP=?
 task talos:upgrade-k8s
 # e.g. task talos:upgrade-k8s
 ```
+
+### ➕ Adding a node to your cluster
+
+At some point you might want to expand your cluster to run more workloads and/or improve the reliability of your cluster. Keep in mind it is recommended to have an **odd number** of control plane nodes for quorum reasons.
+
+You don't need to re-bootstrap the cluster to add new nodes. Follow these steps:
+
+1. **Prepare the new node**: Review the [Stage 2: Machine Preparation](#stage-2-machine-preparation) section and boot your new node into maintenance mode.
+
+2. **Get the node information**: While the node is in maintenance mode, retrieve the disk and MAC address information needed for configuration:
+
+   ```sh
+   talosctl get disks -n <ip> --insecure
+   talosctl get links -n <ip> --insecure
+   ```
+
+3. **Update the configuration**: Read the documentation for [talhelper](https://budimanjojo.github.io/talhelper/latest/) and extend the `talconfig.yaml` file manually with the new node information (including the disk and MAC address from step 2).
+
+4. **Generate and apply the configuration**:
+
+   ```sh
+   # Render your talosconfig based on the talconfig.yaml file
+   task talos:generate-config
+
+   # Apply the configuration to the node
+   task talos:apply-node IP=?
+   # e.g. task talos:apply-node IP=10.10.10.10
+   ```
+
+The node should join the cluster automatically and workloads will be scheduled once they report as ready.
 
 ## 🤖 Renovate
 
@@ -353,7 +391,7 @@ Below are some optional considerations you may want to explore.
 
 ### DNS
 
-The template uses [k8s_gateway](https://github.com/ori-edge/k8s_gateway) to provide DNS for your applications, consider exploring [external-dns](https://github.com/kubernetes-sigs/external-dns) as an alternative.
+The template uses [k8s_gateway](https://github.com/k8s-gateway/k8s_gateway) to provide DNS for your applications, consider exploring [external-dns](https://github.com/kubernetes-sigs/external-dns) as an alternative.
 
 External-DNS offers broad support for various DNS providers, including but not limited to:
 
