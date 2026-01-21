@@ -4,11 +4,15 @@ kind: Certificate
 metadata:
   name: "#{ cloudflare_domain.replace('.', '-') }#-production"
 spec:
-  secretName: "#{ cloudflare_domain.replace('.', '-') }#-production-tls"
+  dnsNames:
+    - "#{ cloudflare_domain }#"
+    - "*.#{ cloudflare_domain }#"
+  duration: 160h
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
-  commonName: "#{ cloudflare_domain }#"
-  dnsNames: ["#{ cloudflare_domain }#", "*.#{ cloudflare_domain }#"]
-
-
+  privateKey:
+    algorithm: ECDSA
+  secretName: "#{ cloudflare_domain.replace('.', '-') }#-production-tls"
+  usages:
+    - digital signature
