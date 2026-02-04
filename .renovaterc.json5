@@ -25,8 +25,8 @@
   kubernetes: {
     managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
   },
-  kustomize: {
-    managerFilePatterns: ["/^kustomization\\.ya?ml(?:\\.j2)?$/"],
+  "helm-values": {
+    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
   },
   packageRules: [
     {
