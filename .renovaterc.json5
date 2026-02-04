@@ -23,17 +23,12 @@
     ],
   },
   helm: {
-    managerFilePatterns: [
-      "/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/",
-      "/(^|/)kubernetes/.+\\/values\\.ya?ml(?:\\.j2)?$/",
-      "/(^|/)kubernetes/.+\\/values\\.sops\\.ya?ml(?:\\.j2)?$/",
-    ],
+    managerFilePatterns: ["/(^|/)kubernetes/.+\\/values(?:\\.sops)?\\.ya?ml(?:\\.j2)?$/"],
   },
   kubernetes: {
     managerFilePatterns: [
       "/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/",
-      "/(^|/)kubernetes/.+\\/values\\.ya?ml(?:\\.j2)?$/",
-      "/(^|/)kubernetes/.+\\/values\\.sops\\.ya?ml(?:\\.j2)?$/",
+      "/(^|/)kubernetes/.+\\/values(?:\\.sops)?\\.ya?ml(?:\\.j2)?$/"
     ],
   },
   kustomize: {
