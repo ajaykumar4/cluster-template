@@ -1,0 +1,51 @@
+controllers:
+  echo:
+    strategy: RollingUpdate
+    containers:
+      app:
+        image:
+          repository: ghcr.io/mendhak/http-https-echo
+          tag: 37
+        env:
+          HTTP_PORT: &port 8080
+          LOG_WITHOUT_NEWLINE: true
+          LOG_IGNORE_PATH: /healthz
+          PROMETHEUS_ENABLED: true
+        probes:
+          liveness: &probes
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /healthz
+                port: *port
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 1
+              failureThreshold: 3
+          readiness: *probes
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: { drop: ["ALL"] }
+        resources:
+          requests:
+            cpu: 10m
+          limits:
+            memory: 64Mi
+defaultPodOptions:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+service:
+  app:
+    controller: echo
+    ports:
+      http:
+        port: *port
+serviceMonitor:
+  app:
+    serviceName: echo
+    endpoints:
+      - port: http
