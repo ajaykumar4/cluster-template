@@ -31,6 +31,6 @@ run = [
 "aqua:kubernetes-sigs/kustomize" = "5.8.0"
 "aqua:kubernetes/kubernetes/kubectl" = "1.35.1"
 "aqua:mikefarah/yq" = "4.52.4"
-"aqua:siderolabs/talos" = "1.12.3"
+"aqua:siderolabs/talos" = "1.12.4"
 "aqua:yannh/kubeconform" = "0.7.0"
 "aqua:viaduct-ai/kustomize-sops" = "4.4.0"
