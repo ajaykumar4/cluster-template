@@ -39,7 +39,8 @@ l2announcements:
 loadBalancer:
   algorithm: maglev
   mode: "#{ cilium_loadbalancer_mode }#"
-localRedirectPolicy: true
+localRedirectPolicies:
+  enabled: true
 operator:
   dashboards:
     enabled: true
