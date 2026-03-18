@@ -3,7 +3,7 @@ route:
     hostnames: ["echo.#{ cloudflare_domain }#"]
     parentRefs:
       - name: envoy-external
-        namespace: kube-system
+        namespace: network
         sectionName: https
     rules:
       - backendRefs:

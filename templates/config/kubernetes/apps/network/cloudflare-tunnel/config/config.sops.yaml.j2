@@ -11,7 +11,7 @@ data:
 
     ingress:
       - hostname: "#{ cloudflare_domain }#"
-        service: &svc https://envoy-external.kube-system.svc.cluster.local
+        service: &svc https://envoy-external.network.svc.cluster.local
       - hostname: "*.#{ cloudflare_domain }#"
         service: *svc
       - service: http_status:404
