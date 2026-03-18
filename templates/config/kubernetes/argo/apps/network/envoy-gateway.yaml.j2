@@ -18,6 +18,8 @@ spec:
       targetRevision: v1.7.1
       helm:
         releaseName: envoy-gateway
+        valueFiles:
+          - $repo/kubernetes/apps/network/envoy-gateway/values.yaml
   destination:
     name: in-cluster
     namespace: network
