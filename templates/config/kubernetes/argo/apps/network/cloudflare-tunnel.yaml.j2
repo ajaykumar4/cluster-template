@@ -13,13 +13,13 @@ spec:
       path: kubernetes/apps/network/cloudflare-tunnel
       targetRevision: #{ repository_branch }#
       ref: repo
-    - repoURL: ghcr.io/bjw-s/helm
+    - repoURL: ghcr.io/bjw-s-labs/helm
       chart: app-template
-      targetRevision: 3.7.3
+      targetRevision: 4.6.2
       helm:
         releaseName: cloudflare-tunnel
         valueFiles:
-          - $repo/kubernetes/apps/network/cloudflare-tunnel/values.yaml
+          - $repo/kubernetes/apps/network/cloudflare-tunnel/values.sops.yaml
   destination:
     name: in-cluster
     namespace: network

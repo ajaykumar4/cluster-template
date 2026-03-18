@@ -76,7 +76,7 @@ kind: Gateway
 metadata:
   name: envoy-internal
   annotations:
-    external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
+    external-dns.alpha.kubernetes.io/target: "internal.#{ cloudflare_domain }#"
 spec:
   gatewayClassName: envoy
   infrastructure:

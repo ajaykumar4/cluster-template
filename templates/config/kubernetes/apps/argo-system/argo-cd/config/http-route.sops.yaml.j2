@@ -5,7 +5,8 @@ metadata:
 spec:
   parentRefs:
     - name: envoy-external
-      namespace: kube-system
+      namespace: network
+      sectionName: https
   hostnames: ["argo.#{ cloudflare_domain }#"]
   rules:
     - backendRefs:
