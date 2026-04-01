@@ -130,9 +130,9 @@ function sync_argo_apps() {
     log debug "Sync Argo Applications"
 
     local -r bootstrappingmaps=(
-        "${ROOT_DIR}/kubernetes/components/common/apps.yaml"
-        "${ROOT_DIR}/kubernetes/components/common/repositories.yaml"
         "${ROOT_DIR}/kubernetes/components/common/settings.yaml"
+        "${ROOT_DIR}/kubernetes/components/common/repositories.yaml"
+        "${ROOT_DIR}/kubernetes/components/common/apps.yaml"
     )
 
     for bootstrappingmap in "${bootstrappingmaps[@]}"; do
