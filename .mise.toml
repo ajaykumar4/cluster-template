@@ -14,7 +14,7 @@ run = [
 [tools]
 "python" = "3.14.4" # required:template
 "uv" = "0.11.12" # required:template
-"pipx" = "1.11.1" # required:template
+"pipx" = "1.12.0" # required:template
 "pipx:makejinja" = "2.8.2" # required:template
 "aqua:argoproj/argo-cd" = "3.4.1"
 "aqua:budimanjojo/talhelper" = "3.1.9"
