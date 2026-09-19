@@ -13,7 +13,7 @@ run = [
 
 [tools]
 "python" = "3.14.7" # required:template
-"uv" = "0.12.13" # required:template
+"uv" = "0.12.17" # required:template
 "pipx" = "1.17.4" # required:template
 "pipx:makejinja" = "2.9.1" # required:template
 "aqua:argoproj/argo-cd" = "3.5.3"
