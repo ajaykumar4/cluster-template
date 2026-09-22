@@ -1,0 +1,103 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "E2E Cluster"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "30 5 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  bootstrap:
+    if: ${{ github.repository == 'ajaykumar4/cluster-template' }}
+    name: bootstrap (qemu)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      git:
+        image: ghcr.io/charmbracelet/soft-serve:v0.12.2
+        env:
+          SOFT_SERVE_GIT_ENABLED: "false"
+          SOFT_SERVE_LFS_ENABLED: "false"
+          SOFT_SERVE_SSH_LISTEN_ADDR: "127.0.0.1:23231"
+          SOFT_SERVE_STATS_ENABLED: "false"
+        ports:
+          - 8418:23232
+        entrypoint: /bin/sh
+        command: >-
+          -c "set -eu; ssh-keygen -q -t ed25519 -N '' -f /tmp/admin;
+          export SOFT_SERVE_INITIAL_ADMIN_KEYS=$(cat /tmp/admin.pub);
+          /usr/local/bin/soft serve & pid=$!;
+          until ssh -q -i /tmp/admin -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -p 23231 localhost settings anon-access read-write; do sleep 1; done;
+          ssh -q -i /tmp/admin -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -p 23231 localhost repo create repo;
+          wait $pid"
+        options: >-
+          --health-cmd "git ls-remote http://localhost:23232/repo.git"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends gettext-base qemu-system-x86 qemu-utils ovmf
+
+      - name: Setup mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Boot maintenance-mode nodes
+        id: cluster
+        uses: home-operations/talosctl-cluster-action@fb6a31bf5de43218acc80d2e23958a16eee7380c # v0.2.2
+        with:
+          config: ./.github/template-tests/e2e/talos-cluster.yaml
+          cache: true
+
+      - name: Export cluster environment
+        env:
+          CONTROLPLANE_IPS: "${{ steps.cluster.outputs.controlplane-ips }}"
+          GATEWAY: "${{ steps.cluster.outputs.gateway }}"
+          WORKER_IPS: "${{ steps.cluster.outputs.worker-ips }}"
+        run: |
+          echo "E2E_CONTROLPLANE_IPS=$CONTROLPLANE_IPS" >> "$GITHUB_ENV"
+          echo "E2E_WORKER_IPS=$WORKER_IPS" >> "$GITHUB_ENV"
+          echo "E2E_GATEWAY=$GATEWAY" >> "$GITHUB_ENV"
+          echo "E2E_CIDR=10.9.0.0/24" >> "$GITHUB_ENV"
+          echo "E2E_STATE=$RUNNER_TEMP/template-e2e" >> "$GITHUB_ENV"
+
+      - name: Prepare cluster
+        run: bash ./.github/template-tests/e2e/cluster.sh prepare
+
+      - name: Build healthy cluster foundation
+        run: bash ./.github/template-tests/e2e/cluster.sh foundation
+
+      - name: Test ArgoCD SOPS
+        id: argocd-sops
+        run: bash ./.github/template-tests/e2e/cluster.sh argocd-sops
+        background: true
+
+      - name: Test networking
+        id: networking
+        run: bash ./.github/template-tests/e2e/cluster.sh networking
+        background: true
+
+      - name: Wait for E2E tests
+        wait: [argocd-sops, networking]
+
+      - name: Summarize cluster
+        run: bash ./.github/template-tests/e2e/cluster.sh summary

@@ -1,0 +1,176 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "E2E"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  validate-invalid:
+    if: ${{ github.repository == 'ajaykumar4/cluster-template' }}
+    name: reject-invalid (${{ matrix.fixture }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture:
+          - overlapping-cidrs
+          - nested-cidr-overlap
+          - non-canonical-cidr
+          - tiny-svc-cidr
+          - duplicate-gateway-addrs
+          - duplicate-node-names
+          - reserved-node-name
+          - bad-mac-address
+          - bad-repo-url
+          - missing-known-hosts
+          - node-addr-outside-cidr
+          - node-uses-gateway-addr
+          - gateway-node-collision
+          - bad-vlan-tag
+          - bad-bgp-asn
+          - missing-dns-token
+          - tunnel-without-dns
+          - missing-external-gateway
+          - missing-schematic
+          - partial-bgp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Assert schema rejects ${{ matrix.fixture }}.toml
+        run: |
+          fixture=./.github/template-tests/invalid/${{ matrix.fixture }}.toml
+          if uv run --quiet --locked --no-dev ./template/scripts/validate.py "$fixture" >/dev/null 2>&1; then
+            echo "::error::schema accepted invalid fixture ${{ matrix.fixture }} (expected rejection)"
+            exit 1
+          fi
+          echo "schema correctly rejected ${{ matrix.fixture }}"
+          # Also surface the actual error message in the log for debuggability.
+          uv run --quiet --locked --no-dev ./template/scripts/validate.py "$fixture" || true
+
+  validator-tests:
+    if: ${{ github.repository == 'ajaykumar4/cluster-template' }}
+    name: validator-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Run validator tests
+        run: uv run --quiet --locked pytest ./template/scripts/test_validate.py
+
+  validate-valid:
+    if: ${{ github.repository == 'ajaykumar4/cluster-template' }}
+    name: accept-valid (${{ matrix.fixture }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture:
+          - public
+          - private
+          - selfhosted
+          - no-webhook
+          - internal
+          - direct
+          - single-node
+          - multi-controller
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          experimental: true
+          install_args: --locked
+
+      - name: Run init recipe
+        run: just init
+
+      - name: Prepare files
+        run: |
+          cp ./.github/template-tests/valid/${{ matrix.fixture }}.toml cluster.toml
+          echo '{"AccountTag":"fake","TunnelSecret":"fake","TunnelID":"fake"}' > cloudflare-tunnel.json
+          touch kubeconfig
+
+      - name: Assert cluster.toml passes the JSON Schema
+        run: taplo check --schema "file://$PWD/cluster.schema.json" ./cluster.toml
+
+      - name: Run configure recipe
+        run: just configure
+
+      # Rendered output must already match the format-yaml pre-commit hook,
+      # otherwise every `just configure` shows up as formatting churn.
+      - name: Assert rendered output is formatted
+        run: oxfmt --check ./.sops.yaml ./bootstrap ./kubernetes ./talos
+
+      - name: Install flate
+        uses: home-operations/flate/action@631b76b69c4e58c6f4d1cb01e23616fa61aebafa # v0.6.5
+        with:
+          base: ""
+
+      - name: Run flate test
+        run: flate test all -p ./kubernetes/argo/cluster
+
+      - name: Render bootstrap helmfile charts
+        run: just template test-helmfile
+
+      - name: Dry run bootstrap talos recipe
+        run: just --dry-run bootstrap talos
+
+      - name: Create talos secret
+        run: just bootstrap talos-secret
+
+      - name: Render talos configs
+        run: just talos render
+
+      - name: Validate talos configs
+        run: |
+          for config in ./talos/rendered/*.yaml; do
+            talosctl validate --config "$config" --mode metal
+          done
+
+      - name: Dry run bootstrap apps recipe
+        run: just --dry-run bootstrap apps
+
+      - name: Run reset recipe
+        run: yes | just template reset
+
+      - name: Run tidy recipe
+        run: yes | just template tidy
