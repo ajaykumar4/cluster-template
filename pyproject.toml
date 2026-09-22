@@ -2,15 +2,10 @@
 name = "cluster-template"
 version = "0.0.0"
 requires-python = ">=3.14"
-dependencies = [
-  "makejinja==2.9.1",
-  "pydantic==2.13.5",
-]
+dependencies = ["makejinja==2.9.1", "pydantic==2.13.5"]
 
 [dependency-groups]
-dev = [
-  "pytest>=8",
-]
+dev = ["pytest>=8"]
 
 [tool.uv]
 package = false
