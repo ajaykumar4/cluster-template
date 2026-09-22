@@ -1,0 +1,14 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argo
+spec:
+  parentRefs:
+    - name: envoy-external
+      namespace: network
+      sectionName: https
+  hostnames: ["argo.#{ domain.name }#"]
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 80

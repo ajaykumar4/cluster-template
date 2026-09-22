@@ -1,0 +1,33 @@
+---
+clusterName: kubernetes
+clusterEndpoint: https://#{ kubernetes.api.addr }#:6443
+
+# renovate: datasource=github-releases depName=siderolabs/talos
+talosVersion: v1.14.1
+# renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+kubernetesVersion: v1.37.0
+
+secretsPath: secrets.sops.yaml
+
+nodes:
+  #% for item in nodes %#
+  - host: "#{ item.name }#"
+    ip: "#{ item.address }#"
+    role: #{ 'control-plane' if item.controller else 'worker' }#
+    schematicId: "#{ item.schematic_id }#"
+    #% if item.secureboot %#
+    secureboot: true
+    #% endif %#
+    data:
+      #% if item.disk.startswith('/') %#
+      installDisk: "#{ item.disk }#"
+      installDiskSerial: ""
+      #% else %#
+      installDisk: ""
+      installDiskSerial: "#{ item.disk }#"
+      #% endif %#
+      macAddr: "#{ item.mac_addr | lower }#"
+      mtu: #{ item.mtu }#
+      encryptDisk: #{ item.encrypt_disk | string | lower }#
+      kernelModules: [#{ item.kernel_modules | join(', ') }#]
+  #% endfor %#

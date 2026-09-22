@@ -4,18 +4,22 @@
 *.decrypted~*.yaml
 /age.key
 /cloudflare-tunnel.json
-/github-deploy.key
-/github-deploy.key.pub
-/github-push-token.txt
+/deploy.key
+/deploy.key.pub
+/argo-webhook-token.txt
 # Template config files
-/cluster.yaml
-/nodes.yaml
+/cluster.toml
 # Kubernetes
 kubeconfig
 talosconfig
+# Python
+__pycache__/
+*.py[cod]
 # Misc.
+.claude/
 .private/
-.task/
 .venv/
 .DS_Store
 Thumbs.db
+/talos/output/
+/talos/rendered/

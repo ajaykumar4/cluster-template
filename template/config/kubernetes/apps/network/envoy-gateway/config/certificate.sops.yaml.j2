@@ -1,0 +1,18 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "#{ domain.name.replace('.', '-') }#-production"
+spec:
+  dnsNames:
+    - "#{ domain.name }#"
+    - "*.#{ domain.name }#"
+  duration: 160h
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  privateKey:
+    algorithm: ECDSA
+  secretName: "#{ domain.name.replace('.', '-') }#-production-tls"
+  usages:
+    - digital signature
