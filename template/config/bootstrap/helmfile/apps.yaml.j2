@@ -27,8 +27,8 @@ releases:
     version: 1.47.0
     values: ["../../kubernetes/apps/kube-system/coredns/values.yaml"]
     needs: ["kube-system/cilium"]
-
   #% if spegel.enabled %#
+
   - name: spegel
     namespace: kube-system
     chart: oci://ghcr.io/spegel-org/helm-charts/spegel
