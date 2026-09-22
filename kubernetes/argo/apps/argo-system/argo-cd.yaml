@@ -1,0 +1,45 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo
+  namespace: argo-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    argocd.argoproj.io/instance: argo
+spec:
+  project: kubernetes
+  sources:
+    - repoURL: https://github.com/ajaykumar4/cluster-template.git
+      path: kubernetes/apps/argo-system/argo-cd
+      targetRevision: main
+      ref: repo
+    - repoURL: ghcr.io/argoproj/argo-helm
+      chart: argo-cd
+      targetRevision: 10.9.0
+      helm:
+        releaseName: argo-cd
+        valueFiles:
+          - $repo/kubernetes/apps/argo-system/argo-cd/values.yaml
+          - $repo/kubernetes/apps/argo-system/argo-cd/values.sops.yaml
+  destination:
+    name: in-cluster
+    namespace: argo-system
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 1
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+      - PruneLast=true
+      - RespectIgnoreDifferences=true

@@ -1,0 +1,31 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/helmfile
+
+# Bootstraps cluster-wide Custom Resource Definitions (CRDs) by extracting them
+# from upstream Helm charts and applying them directly with kubectl. The releases
+# below are never reconciled with helmfile apply or helmfile sync — only their
+# CRDs are rendered (via --include-crds) and piped to the cluster.
+#
+# Installing CRDs out-of-band ensures they exist before ArgoCD begins reconciling
+# applications that reference them.
+
+helmDefaults:
+  args:
+    - --include-crds
+    - --no-hooks
+
+releases:
+  - name: cloudflare-dns
+    namespace: network
+    chart: oci://ghcr.io/home-operations/charts-mirror/external-dns
+    version: 1.21.1
+
+  - name: envoy-gateway
+    namespace: network
+    chart: oci://mirror.gcr.io/envoyproxy/gateway-helm
+    version: v1.9.1
+
+  - name: prometheus-operator-crds
+    namespace: observability
+    chart: oci://ghcr.io/prometheus-community/charts/prometheus-operator-crds
+    version: 29.0.0
