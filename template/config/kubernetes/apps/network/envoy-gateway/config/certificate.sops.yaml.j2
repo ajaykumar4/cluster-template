@@ -1,14 +1,15 @@
+---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "#{ domain.name.replace('.', '-') }#-production"
 spec:
   dnsNames:
-    - "#{ domain.name }#"
-    - "*.#{ domain.name }#"
+    - "${SECRET_DOMAIN}"
+    - "*.${SECRET_DOMAIN}"
   duration: 160h
   issuerRef:
-    name: letsencrypt-production
+    name: #{ cluster_issuer }#
     kind: ClusterIssuer
   privateKey:
     algorithm: ECDSA
