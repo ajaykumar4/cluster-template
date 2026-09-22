@@ -8,6 +8,7 @@ jinja_suffix = ".j2"
 copy_metadata = true
 force = true
 undefined = "strict"
+keep_trailing_newline = true
 
 [makejinja.delimiter]
 block_start = "#%"
