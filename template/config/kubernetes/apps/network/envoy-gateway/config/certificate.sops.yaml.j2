@@ -5,8 +5,8 @@ metadata:
   name: "#{ domain.name.replace('.', '-') }#-production"
 spec:
   dnsNames:
-    - "${SECRET_DOMAIN}"
-    - "*.${SECRET_DOMAIN}"
+    - "#{ domain.name }#"
+    - "*.#{ domain.name }#"
   duration: 160h
   issuerRef:
     name: #{ cluster_issuer }#
