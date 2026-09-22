@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-    name: "#{ domain.name.replace('.', '-') }#-production"
+    name: "#{ domain.name }#-production"
 spec:
     dnsNames:
         - "#{ domain.name }#"
@@ -13,6 +13,6 @@ spec:
         kind: ClusterIssuer
     privateKey:
         algorithm: ECDSA
-    secretName: "#{ domain.name.replace('.', '-') }#-production-tls"
+    secretName: "#{ domain.name }#-production-tls"
     usages:
         - digital signature
