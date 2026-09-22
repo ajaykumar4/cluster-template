@@ -1,5 +1,0 @@
-fullnameOverride: "argocd"
-configs:
-  secret:
-    argocdServerAdminPassword: ""
-    githubSecret: 9f2e6b632c2c44b7ab8db9728c9f89a4
