@@ -1,5 +1,5 @@
 [makejinja]
-inputs = ["./template/overrides", "./template/config"]
+inputs = ["./template/overrides","./template/config"]
 output = "./"
 exclude_patterns = ["*.partial.yaml.j2"]
 import_paths = ["./template/scripts"]
@@ -8,7 +8,6 @@ jinja_suffix = ".j2"
 copy_metadata = true
 force = true
 undefined = "strict"
-keep_trailing_newline = true
 
 [makejinja.delimiter]
 block_start = "#%"
