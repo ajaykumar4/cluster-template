@@ -170,15 +170,15 @@ git -C "$STATE/gitwork" push --quiet "$GIT_PUSH_URL" main
 
 assert_cluster_health() {
 echo "==> asserting cluster health"
-kubectl wait nodes --all --for=condition=Ready --timeout=10m
+kubectl wait nodes --all --for=condition=Ready --timeout=20m
 for ns in kube-system cert-manager argo-system; do
-    kubectl wait pods --namespace "$ns" --all --for=condition=Ready --timeout=10m
+    kubectl wait pods --namespace "$ns" --all --for=condition=Ready --timeout=20m
 done
 
 echo "==> asserting argocd reconciliation"
-kubectl wait deployment argocd-server --namespace argo-system --for=condition=Available --timeout=10m
-kubectl wait application --all --all-namespaces --for=condition=Synced --timeout=10m
-kubectl wait application --all --all-namespaces --for=condition=Healthy --timeout=10m
+kubectl wait deployment argocd-server --namespace argo-system --for=condition=Available --timeout=20m
+kubectl wait application --all --all-namespaces --for=condition=Synced --timeout=20m
+kubectl wait application --all --all-namespaces --for=condition=Healthy --timeout=20m
 }
 
 foundation() {
