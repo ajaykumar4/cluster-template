@@ -1,0 +1,292 @@
+#:schema ./cluster.schema.json
+# =============================================================================
+#    Physical LAN that your Talos nodes live on. Defines the address space
+#    used for node IPs, the gateway/DNS/NTP servers nodes will use, and an
+#    optional VLAN tag for switch ports that aren't natively tagged.
+# =============================================================================
+[network]
+
+# The CIDR block your nodes' IPs come from. Every node's `address`, the Kube
+# API VIP, and the gateway VIPs (internal/dns/external) must all sit inside
+# this range.
+# REQUIRED. Example: "192.168.1.0/24"
+node_cidr = ""
+
+# Upstream DNS servers Talos nodes use for name resolution. Defaults to
+# Cloudflare (1.1.1.1 / 1.0.0.1). Override if you run an internal resolver
+# (Pi-hole, Unbound, AdGuard) or want a different public provider.
+# OPTIONAL. Default: ["1.1.1.1", "1.0.0.1"]
+
+# dns_servers = ["1.1.1.1", "1.0.0.1"]
+
+# Upstream NTP servers. Defaults to Cloudflare's anycast NTP. Most homelabs
+# don't need to change this.
+# OPTIONAL. Default: ["162.159.200.1", "162.159.200.123"]
+
+# ntp_servers = ["162.159.200.1", "162.159.200.123"]
+
+# Default gateway IP that nodes use to reach the rest of your LAN/WAN.
+# Defaults to the first usable host in node_cidr (e.g. 192.168.1.1 for
+# 192.168.1.0/24), which is correct for most home routers. Override if your
+# router lives at a non-standard address inside the subnet.
+# OPTIONAL. Default: first IP in node_cidr
+
+# default_gateway = ""
+
+# 802.1Q VLAN tag to apply to the Talos node interface. Only set this if
+# your switch ports are configured as trunks (passing tagged traffic to the
+# nodes); access ports already untag VLAN traffic. Must be 1-4094.
+# REF: https://www.talos.dev/latest/advanced/advanced-networking/#vlans
+# OPTIONAL.
+
+# vlan_tag = ""
+
+
+# =============================================================================
+#    Cluster-internal control plane and overlay networks. The pod and service
+#    CIDRs are in-cluster only — they don't have to be routable on your LAN
+#    and never appear on the wire outside the nodes.
+# =============================================================================
+[kubernetes]
+
+# CIDR Cilium hands out to pods. /16 gives ~64K pod IPs, which is well beyond
+# what a homelab needs but matches the upstream default. Must NOT overlap
+# with node_cidr or svc_cidr.
+# OPTIONAL. Default: "10.42.0.0/16"
+
+# pod_cidr = "10.42.0.0/16"
+
+# CIDR for ClusterIP services (the virtual IPs `kubectl get svc` shows).
+# Same /16 reasoning as pod_cidr. Must NOT overlap with node_cidr or
+# pod_cidr.
+# OPTIONAL. Default: "10.43.0.0/16"
+
+# svc_cidr = "10.43.0.0/16"
+
+# ClusterIP for the CoreDNS Service. Must be inside svc_cidr.
+# OPTIONAL. Default: the 10th IP in svc_cidr
+
+# coredns_addr = ""
+
+[kubernetes.api]
+
+# Virtual IP for the Kubernetes API server. kubectl, argo, and every other
+# client connect here on port 6443. Must be an unused IP inside
+# network.node_cidr — kube-vip floats it across controller nodes.
+# REQUIRED.
+addr = ""
+
+# Additional Subject Alternative Names to put on the Kube API cert. Useful
+# if you want to call the API by hostname (e.g. via a CNAME or local
+# /etc/hosts entry) instead of the raw IP.
+# OPTIONAL. Example: ["mycluster.example.com"]
+
+# tls_sans = ["mycluster.example.com"]
+
+
+# =============================================================================
+#    LoadBalancer IPs that Cilium hands out to the cluster's edge gateways.
+#    Each must be an unused address inside network.node_cidr, and all four
+#    (these three plus kubernetes.api.addr) must be distinct.
+# =============================================================================
+[gateways]
+
+# IP for the `envoy-internal` gateway — used by HTTPRoutes intended for
+# private/in-network access only. Most apps use this gateway by default.
+# REQUIRED.
+internal = ""
+
+# IP for `k8s_gateway`, which serves DNS for cluster-managed hostnames.
+# Point your home DNS server's conditional forwarder for domain.name
+# at this IP to enable split-DNS resolution from your LAN.
+# REQUIRED.
+dns = ""
+
+# IP for the `envoy-external` gateway — sits behind the ingress path (e.g.
+# the cloudflared tunnel) and handles traffic exposed to the public
+# internet. HTTPRoutes that reference this gateway become reachable via
+# your public domain.
+# REQUIRED unless ingress.mode is "none" (internal-only cluster).
+external = ""
+
+
+# =============================================================================
+#    The Git repo Argo will sync from. This is the single source of truth
+#    for everything in your cluster — once bootstrapped, changes are made by
+#    pushing to this repo. Any Git host works: GitHub, GitLab, Gitea,
+#    Forgejo, Codeberg or self-hosted.
+# =============================================================================
+[repository]
+
+# Full clone URL of the repository this cluster will pull from.
+# Must be the repo you cloned this template into.
+# Use `https://` if the repo is publicly readable (or `http://` for a
+# LAN-local git server). Use `ssh://git@` if it is
+# private: the template then wires up a deploy key (`deploy.key.pub`) so
+# Argo can clone over SSH; see the README for the extra setup step.
+# REQUIRED. Examples:
+#   "https://github.com/onedr0p/home-ops.git"
+#   "ssh://git@gitlab.com/onedr0p/home-ops.git"
+#   "ssh://git@git.example.com/k8s/home-ops.git"
+url = ""
+
+# Branch Argo watches. Changes pushed to this branch get reconciled into the
+# cluster.
+# OPTIONAL. Default: "main"
+
+# branch = "main"
+
+# Webhook payload format the Argo webhook Receiver verifies, so pushes are
+# reconciled instantly. Gitea and Forgejo emulate GitHub webhooks, so keep
+# "github" for them. Use "generic-hmac" for anything else that signs with
+# HMAC; see https://argo-cd.readthedocs.io/en/latest/operator-manual/webhook/
+# Use "none" to skip the webhook entirely (e.g. your Git host cannot reach
+# the cluster); Argo then only polls on an interval.
+# OPTIONAL. Default: "github".
+# Allowed: "github" | "gitlab" | "generic-hmac" | "none"
+
+# webhook_provider = "github"
+
+# SSH host keys for your Git host (`ssh-keyscan -t ed25519,ecdsa,rsa <host>`
+# output). Only used with `ssh://` URLs. Keys for github.com, gitlab.com and
+# codeberg.org are bundled; REQUIRED for any other host.
+# OPTIONAL. Example:
+#   known_hosts = """
+#   git.example.com ssh-ed25519 AAAA...
+#   """
+
+# known_hosts = ""
+
+
+# =============================================================================
+#    The domain your cluster's hostnames live under. Used for every rendered
+#    hostname (echo, argo, internal split DNS) and the wildcard
+#    certificate, regardless of DNS provider.
+# =============================================================================
+[domain]
+
+# REQUIRED. Example: "example.com"
+name = ""
+
+
+# =============================================================================
+#    Public DNS authority and certificate issuance. With "cloudflare",
+#    external-dns publishes records automatically and cert-manager issues a
+#    Let's Encrypt wildcard via ACME DNS-01. With "none", nothing is
+#    published and the wildcard certificate is issued by an in-cluster
+#    self-signed CA instead (internal-only cluster).
+# =============================================================================
+[dns]
+
+# OPTIONAL. Default: "cloudflare". Allowed: "cloudflare" | "none"
+
+# provider = "cloudflare"
+
+# Cloudflare API token (NOT the global API key) with `Zone - DNS - Edit` and
+# `Account - Cloudflare Tunnel - Read` permissions, scoped to the zone
+# above. See the README for token creation steps.
+# REQUIRED when provider is "cloudflare"; must be empty otherwise.
+token = ""
+
+
+# =============================================================================
+#    How the public internet reaches the cluster's external gateway. With
+#    "cloudflare-tunnel", cloudflared connects outbound so no ports are
+#    forwarded (requires dns.provider = "cloudflare" and
+#    cloudflare-tunnel.json). With "direct", you forward TCP 443 (and
+#    optionally 80) on your router to gateways.external and point an
+#    `external.<domain>` DNS record at your WAN address (A record or DDNS
+#    CNAME) yourself; per-app records are still published automatically.
+#    With "none", nothing is exposed and apps are only reachable on your
+#    LAN via the internal gateway.
+# =============================================================================
+[ingress]
+
+# OPTIONAL. Default: "cloudflare-tunnel" when dns.provider is "cloudflare",
+# otherwise "none". Allowed: "cloudflare-tunnel" | "direct" | "none"
+
+# mode = "cloudflare-tunnel"
+
+
+# =============================================================================
+#    CNI configuration. Defaults are sane for most homelab setups; touch
+#    this section only if you need BGP peering or a different LB mode.
+# =============================================================================
+[cilium]
+
+# How Cilium's load balancer handles return traffic. `dsr` (Direct Server
+# Return) preserves the client IP and is faster, but requires a switch
+# fabric that won't drop asymmetric flows. `snat` masquerades the client
+# and is the safe default for unknown topologies.
+# REF: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/
+# OPTIONAL. Default: "dsr". Allowed: "dsr" | "snat"
+
+# loadbalancer_mode = "dsr"
+
+# Cilium BGP peering — advertises Service IPs to your upstream router so
+# LoadBalancer addresses become reachable from anywhere on your LAN
+# (rather than only via L2 ARP). Set ALL THREE fields below to enable;
+# leaving any blank disables BGP entirely.
+# REF: https://docs.cilium.io/en/latest/network/bgp-control-plane/bgp-control-plane/
+[cilium.bgp]
+
+# IP of your BGP-speaking router. The cluster peers with it from each node.
+# OPTIONAL. Example: "192.168.1.1"
+
+# router_addr = ""
+
+# ASN your router uses for BGP. Anything in the private range (64512-65534)
+# is fine if you're not peering with the public internet.
+# OPTIONAL. Example: "64513"
+
+# router_asn = ""
+
+# ASN the cluster's nodes use for BGP. Pick a different value than
+# router_asn so peering is eBGP rather than iBGP.
+# OPTIONAL. Example: "64514"
+
+# node_asn = ""
+
+
+# =============================================================================
+#    Talos Image Factory settings shared by all nodes.
+# =============================================================================
+[talos]
+
+# Default schematic for every node that doesn't set its own schematic_id.
+# The 64-character hex string from your build at https://factory.talos.dev/
+# OPTIONAL if every node sets schematic_id itself.
+schematic_id = ""
+
+
+# =============================================================================
+#    One [[nodes]] table per physical machine or VM in the cluster. At least
+#    one controller (controller=true) is required; worker nodes are optional.
+#    For HA, use 3 controllers.
+#
+#    Discover hardware details from a node already booted into Talos
+#    maintenance mode:
+#      talosctl get disks -n <node-ip> --insecure
+#      talosctl get links -n <node-ip> --insecure
+#    Schematic ID is the 64-character hex string from your build at:
+#      https://factory.talos.dev/
+#
+#    The block below is a template — copy it once per node, uncomment, and
+#    fill in the values.
+# =============================================================================
+
+# [[nodes]]
+# name         = "k8s-0"        # Hostname; must match [a-z0-9-]+ (not "global"/"controller"/"worker").
+# address      = "192.168.1.10" # Static IP; must be inside network.node_cidr.
+# controller   = true           # true = control-plane (etcd + API server), false = worker.
+# disk         = "/dev/nvme0n1" # Block device or /dev/disk/by-id/... symlink to install Talos onto.
+# mac_addr     = "aa:bb:cc:dd:ee:ff"  # Primary NIC MAC.
+#
+# # Optional when [talos] sets a cluster-wide default:
+# schematic_id = "376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba"  # 64-hex from factory.talos.dev.
+#
+# # Optional advanced fields (each independently uncommentable):
+# mtu            = 1500                       # Set only for jumbo frames / non-1500 MTUs (1450-9000).
+# secureboot     = false                      # UEFI SecureBoot — requires a SecureBoot-enabled schematic.
+# encrypt_disk   = false                      # TPM-bound full-disk encryption.
+# kernel_modules = ["nvidia", "nvidia_uvm"]   # Only for schematics shipping matching extensions.

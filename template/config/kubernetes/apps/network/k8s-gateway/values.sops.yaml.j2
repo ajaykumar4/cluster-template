@@ -1,0 +1,11 @@
+---
+fullnameOverride: k8s-gateway
+domain: "#{ domain.name }#"
+ttl: 1
+service:
+  type: LoadBalancer
+  port: 53
+  annotations:
+    lbipam.cilium.io/ips: "#{ gateways.dns }#"
+  externalTrafficPolicy: Cluster
+watchedResources: ["HTTPRoute", "Service"]
