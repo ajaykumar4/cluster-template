@@ -5,6 +5,21 @@
   mise: {
     managerFilePatterns: ["/^\\.mise/conf\\.d/[^/]+\\.toml$/"],
   },
+  argocd: {
+    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
+  },
+  helmfile: {
+    managerFilePatterns: [
+      "/(^|/)helmfile\\.ya?ml(?:\\.gotmpl)?(?:\\.j2)?$/",
+      "/(^|/)helmfile\\.d/.+\\.ya?ml(?:\\.gotmpl)?(?:\\.j2)?$/",
+    ],
+  },
+  kubernetes: {
+    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
+  },
+  "helm-values": {
+    managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
+  },
   packageRules: [
     {
       description: "GitHub Actions Group",
