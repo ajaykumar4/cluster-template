@@ -46,12 +46,12 @@ kind: Gateway
 metadata:
   name: envoy-external
   annotations:
-    external-dns.alpha.kubernetes.io/target: "external.#{ domain.name }#"
+    external-dns.kubernetes.io/target: "external.#{ domain.name }#"
 spec:
   gatewayClassName: envoy
   infrastructure:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: "external.#{ domain.name }#"
+      external-dns.kubernetes.io/hostname: "external.#{ domain.name }#"
       lbipam.cilium.io/ips: "#{ gateways.external }#"
   listeners:
     - name: http
@@ -76,12 +76,12 @@ kind: Gateway
 metadata:
   name: envoy-internal
   annotations:
-    external-dns.alpha.kubernetes.io/target: "internal.#{ domain.name }#"
+    external-dns.kubernetes.io/target: "internal.#{ domain.name }#"
 spec:
   gatewayClassName: envoy
   infrastructure:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: "internal.#{ domain.name }#"
+      external-dns.kubernetes.io/hostname: "internal.#{ domain.name }#"
       lbipam.cilium.io/ips: "#{ gateways.internal }#"
   listeners:
     - name: http

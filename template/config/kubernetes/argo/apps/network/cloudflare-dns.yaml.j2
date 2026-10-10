@@ -13,9 +13,9 @@ spec:
       path: kubernetes/apps/network/cloudflare-dns
       targetRevision: #{ repository.branch }#
       ref: repo
-    - repoURL: https://kubernetes-sigs.github.io/external-dns
+    - repoURL: ghcr.io/home-operations/charts-mirror
       chart: external-dns
-      targetRevision: 1.21.1
+      targetRevision: 1.23.0
       helm:
         releaseName: cloudflare-dns
         valueFiles:
